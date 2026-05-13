@@ -121,7 +121,95 @@ lemma far_pole_polynomial_approx
     {b : ℂ} (hb : ∀ z ∈ K, ‖z‖ < ‖b‖) :
     ∀ ε > 0, ∃ p : Polynomial ℂ,
       ∀ z ∈ K, ‖p.eval z - 1 / (z - b)‖ < ε := by
-  sorry
+  intro ε hε
+  by_cases hKne : K.Nonempty
+  · -- Step 1: Get max norm M on K.
+    have hcont : ContinuousOn (fun z : ℂ => ‖z‖) K := continuous_norm.continuousOn
+    obtain ⟨z₀, hz₀K, hz₀max⟩ := hK.exists_isMaxOn hKne hcont
+    set M : ℝ := ‖z₀‖ with hM_def
+    have hM_bound : ∀ z ∈ K, ‖z‖ ≤ M := fun z hz => hz₀max hz
+    have hMb : M < ‖b‖ := hb z₀ hz₀K
+    have hM_nonneg : 0 ≤ M := norm_nonneg _
+    have hb_ne : b ≠ 0 := by
+      intro hb0
+      have : ‖b‖ = 0 := by rw [hb0]; simp
+      linarith [hM_nonneg]
+    have hb_pos : 0 < ‖b‖ := norm_pos_iff.mpr hb_ne
+    set q : ℝ := M / ‖b‖ with hq_def
+    have hq_nonneg : 0 ≤ q := div_nonneg hM_nonneg hb_pos.le
+    have hq_lt_one : q < 1 := by
+      rw [hq_def, div_lt_one hb_pos]; exact hMb
+    have hgap_pos : 0 < ‖b‖ - M := by linarith
+    -- Step 2: Choose N so that q^N / (‖b‖ - M) < ε.
+    have htends : Filter.Tendsto (fun n : ℕ => q ^ n / (‖b‖ - M)) Filter.atTop (𝓝 0) := by
+      have h₁ : Filter.Tendsto (fun n : ℕ => q ^ n) Filter.atTop (𝓝 0) :=
+        tendsto_pow_atTop_nhds_zero_of_lt_one hq_nonneg hq_lt_one
+      have h₂ := h₁.div_const (‖b‖ - M)
+      simpa using h₂
+    have hev : ∀ᶠ n in Filter.atTop, q ^ n / (‖b‖ - M) < ε := by
+      have := (Metric.tendsto_atTop.mp htends) ε hε
+      obtain ⟨N, hN⟩ := this
+      filter_upwards [Filter.eventually_ge_atTop N] with n hn
+      have := hN n hn
+      simp only [Real.dist_eq, sub_zero] at this
+      have hpos : 0 ≤ q ^ n / (‖b‖ - M) :=
+        div_nonneg (pow_nonneg hq_nonneg _) hgap_pos.le
+      rw [abs_of_nonneg hpos] at this
+      exact this
+    obtain ⟨N, hN⟩ := hev.exists
+    -- Step 3: Build polynomial p(z) = -∑_{n=0}^{N-1} z^n / b^{n+1}.
+    refine ⟨∑ n ∈ Finset.range N,
+      Polynomial.C (-(1 / b ^ (n + 1))) * Polynomial.X ^ n, ?_⟩
+    intro z hzK
+    -- Evaluate the polynomial.
+    have heval :
+        (∑ n ∈ Finset.range N,
+            Polynomial.C (-(1 / b ^ (n + 1))) * Polynomial.X ^ n).eval z =
+          ∑ n ∈ Finset.range N, -(z ^ n / b ^ (n + 1)) := by
+      rw [Polynomial.eval_finset_sum]
+      apply Finset.sum_congr rfl
+      intro n _
+      simp [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow,
+            Polynomial.eval_X, neg_div, div_eq_mul_inv, mul_comm]
+    rw [heval]
+    -- z ≠ b since ‖z‖ < ‖b‖
+    have hzne : z - b ≠ 0 := by
+      intro h
+      have : z = b := by linarith [sub_eq_zero.mp h]
+      have hzb : ‖z‖ = ‖b‖ := by rw [this]
+      have : ‖z‖ < ‖b‖ := hb z hzK
+      linarith
+    -- Key identity: -S - 1/(z-b) = (z/b)^N / (z-b) but with negative...
+    -- Let's compute: S = ∑ z^n/b^{n+1}, partial sum identity:
+    -- (z - b) * S = ∑ z^{n+1}/b^{n+1} - ∑ z^n/b^n = (z/b)^N - 1
+    -- So S = ((z/b)^N - 1)/(z - b), hence -S - 1/(z-b) = -(z/b)^N/(z-b).
+    have hb_pow_ne : ∀ n, (b ^ n : ℂ) ≠ 0 := fun n => pow_ne_zero n hb_ne
+    have hkey :
+        (∑ n ∈ Finset.range N, -(z ^ n / b ^ (n + 1))) - 1 / (z - b) =
+          -(z ^ N / (b ^ N * (z - b))) := by
+      have hS :
+          (z - b) * (∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1)) =
+            (z / b) ^ N - 1 := by
+        rw [Finset.mul_sum]
+        have :
+            ∀ n ∈ Finset.range N,
+              (z - b) * (z ^ n / b ^ (n + 1)) =
+                (z / b) ^ (n + 1) - (z / b) ^ n := by
+          intro n _
+          have hbn : (b ^ n : ℂ) ≠ 0 := hb_pow_ne n
+          have hbn1 : (b ^ (n + 1) : ℂ) ≠ 0 := hb_pow_ne (n + 1)
+          field_simp
+          ring
+        rw [Finset.sum_congr rfl this]
+        rw [Finset.sum_range_succ_comm] <;> try rfl
+        -- telescoping
+        sorry
+      sorry
+    sorry
+  · -- K is empty: any polynomial works
+    refine ⟨0, ?_⟩
+    intro z hz
+    exact absurd ⟨z, hz⟩ hKne
 
 /--
 Single pole is polynomially approximable.
