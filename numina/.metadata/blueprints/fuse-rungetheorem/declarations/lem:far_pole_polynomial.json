@@ -9,5 +9,6 @@
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "HARD",
   "notes": "Signature: `lemma far_pole_polynomial_approx {K : Set ℂ} (hK : IsCompact K) {b : ℂ} (hb : ∀ z ∈ K, ‖z‖ < ‖b‖) : ∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - 1 / (z - b)‖ < ε`. Uses `Polynomial ℂ` and `Polynomial.eval`. Hypothesis `∀ z ∈ K, ‖z‖ < ‖b‖` (note: not strict global bound ‖z‖ ≤ r < ‖b‖ - but compactness of K supplies the uniform gap).",
-  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_lem_far_pole_polynomial.lean"
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_lem_far_pole_polynomial.lean",
+  "status": "proved"
 }
