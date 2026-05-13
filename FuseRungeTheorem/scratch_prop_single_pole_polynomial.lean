@@ -560,9 +560,10 @@ private lemma pole_move_polynomial_chain
     have ha₀_notin : a₀ ∉ K := hchain 0
     have hb₀_notin : b₀ ∉ K := hchain _
     have hstep0' : ‖a₀ - b₀‖ < Metric.infDist b₀ K := by
-      have : chain (Fin.castSucc (0 : Fin (m + 1))) = a₀ := by
-        rw [ha₀_def]; congr 1; ext; simp
-      rw [this] at hstep0
+      have heq : chain (Fin.castSucc (0 : Fin (m + 1))) = a₀ := by
+        rw [ha₀_def]
+        congr 1
+      rw [heq] at hstep0
       exact hstep0
     obtain ⟨P', hP'⟩ := pole_move_polynomial_step hK ha₀_notin hb₀_notin hstep0' P (ε / 2)
       (by linarith)
@@ -574,7 +575,8 @@ private lemma pole_move_polynomial_chain
     have hchain'_last : chain' (Fin.last m) = chain (Fin.last (m + 1)) := by
       show chain (Fin.succ (Fin.last m)) = chain (Fin.last (m + 1))
       congr 1
-      ext; simp [Fin.succ, Fin.last]
+      ext
+      simp
     have hQ_z := hQ z hz
     rw [hchain'_0, hchain'_last] at hQ_z
     have hP'_z := hP' z hz
