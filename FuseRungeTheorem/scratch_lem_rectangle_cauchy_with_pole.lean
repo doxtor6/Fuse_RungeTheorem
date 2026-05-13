@@ -325,7 +325,9 @@ private lemma rectangle_cauchy_with_pole
       · rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)]
         exact hinv_cont_seg a b h_avoid
       · exact continuousOn_const
-    exact intervalIntegral.integral_add hi₁ hi₂
+    rw [intervalIntegral.integral_add hi₁ hi₂]
+    -- Pull out f z from the second integral.
+    rw [← intervalIntegral.integral_const_mul]
   -- Apply seg_split to each of the four segments.
   have hAB := seg_split A B hAB_avoid hAB_in_U
   have hBC := seg_split B C hBC_avoid hBC_in_U
