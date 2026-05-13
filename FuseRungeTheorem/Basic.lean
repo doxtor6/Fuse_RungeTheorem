@@ -103,7 +103,7 @@ within `ε`.
 -/
 lemma local_pole_moving
     {K : Set ℂ} (hK : IsCompact K)
-    {a b : ℂ} (ha : a ∉ K) (hb : b ∉ K)
+    {a b : ℂ} (_ha : a ∉ K) (hb : b ∉ K)
     (hab : ‖a - b‖ < Metric.infDist b K) :
     ∀ ε > 0, ∃ N : ℕ,
       ∀ z ∈ K,
