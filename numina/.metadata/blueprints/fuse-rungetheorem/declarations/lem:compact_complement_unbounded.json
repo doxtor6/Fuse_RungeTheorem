@@ -8,5 +8,6 @@
   "leanDeclaration": "compact_complement_unbounded",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "EASY",
-  "notes": "Signature: `lemma compact_complement_unbounded {K : Set ℂ} (hK : IsCompact K) : ∀ R : ℝ, ∃ b : ℂ, b ∉ K ∧ R < ‖b‖`. Uses `‖·‖` (norm) consistently throughout the file; `|b|` in the blueprint corresponds to `‖b‖` for `b : ℂ`. Quantifier is over all reals `R` (blueprint says `R > 0` but the statement is trivially true for `R ≤ 0` so the stronger form is convenient)."
+  "notes": "Signature: `lemma compact_complement_unbounded {K : Set ℂ} (hK : IsCompact K) : ∀ R : ℝ, ∃ b : ℂ, b ∉ K ∧ R < ‖b‖`. Uses `‖·‖` (norm) consistently throughout the file; `|b|` in the blueprint corresponds to `‖b‖` for `b : ℂ`. Quantifier is over all reals `R` (blueprint says `R > 0` but the statement is trivially true for `R ≤ 0` so the stronger form is convenient).",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/Scratch_compact_complement_unbounded.lean"
 }
