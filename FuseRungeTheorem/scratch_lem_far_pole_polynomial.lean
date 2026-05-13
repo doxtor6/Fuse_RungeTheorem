@@ -171,7 +171,7 @@ lemma far_pole_polynomial_approx
       intro n _
       rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow,
           Polynomial.eval_X]
-      rw [div_eq_mul_inv, neg_mul, neg_neg]
+      rw [div_eq_mul_inv]
       ring
     rw [heval]
     -- z ≠ b since ‖z‖ < ‖b‖
@@ -190,8 +190,10 @@ lemma far_pole_polynomial_approx
       -- Then sum is (1/b) * ∑ (z/b)^n = (1/b) * ((z/b)^N - 1)/(z/b - 1) = ((z/b)^N - 1)/(z - b).
       have hzbne : z / b ≠ 1 := by
         intro h
-        have : z = b := by field_simp at h; linarith [h]
-        rw [this] at hzlt; exact lt_irrefl _ hzlt
+        have hzeq : z = b := by
+          have := (div_eq_one_iff_eq hb_ne).mp h
+          exact this
+        rw [hzeq] at hzlt; exact lt_irrefl _ hzlt
       have hgeom : ∑ n ∈ Finset.range N, (z / b) ^ n = ((z / b) ^ N - 1) / (z / b - 1) :=
         geom_sum_eq hzbne N
       have hrew : ∀ n, z ^ n / b ^ (n + 1) = (z / b) ^ n / b := by
@@ -233,18 +235,18 @@ lemma far_pole_polynomial_approx
       have hq_pow_eq : q ^ N = M ^ N / ‖b‖ ^ N := by
         rw [hq_def, div_pow]
       rw [hq_pow_eq]
-      -- ‖z‖^N / (‖b‖^N * ‖z - b‖) ≤ M^N / ‖b‖^N / (‖b‖ - M)
-      -- = M^N / (‖b‖^N * (‖b‖ - M)).
       have rhs_eq : M ^ N / ‖b‖ ^ N / (‖b‖ - M) =
           M ^ N / (‖b‖ ^ N * (‖b‖ - M)) := by
         rw [div_div]
       rw [rhs_eq]
-      apply div_le_div_of_nonneg_left₀ ?_ ?_ ?_
-      rotate_left
-      · exact mul_pos hbN_norm_pos hgap_pos
-      · apply mul_le_mul_of_nonneg_left hzb_norm hbN_norm_pos.le
-      · -- 0 ≤ M^N (since 0 ≤ M)... but we need ‖z‖^N ≤ M^N
-        sorry
+      have hzN_le : ‖z‖ ^ N ≤ M ^ N := pow_le_pow_left₀ (norm_nonneg z) hzbound N
+      have hdenom_le : ‖b‖ ^ N * (‖b‖ - M) ≤ ‖b‖ ^ N * ‖z - b‖ :=
+        mul_le_mul_of_nonneg_left hzb_norm hbN_norm_pos.le
+      have hdenom_pos : 0 < ‖b‖ ^ N * (‖b‖ - M) := mul_pos hbN_norm_pos hgap_pos
+      apply le_trans
+      · exact div_le_div_of_nonneg_left (pow_nonneg (norm_nonneg z) N) hdenom_pos hdenom_le
+      · exact div_le_div_of_nonneg_right hzN_le hdenom_pos.le |>.trans (le_of_eq rfl)
+      -- Actually we want both directions. Let me use a simpler chain.
     -- Combine with hN.
     calc ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖)
         ≤ q ^ N / (‖b‖ - M) := hineq
