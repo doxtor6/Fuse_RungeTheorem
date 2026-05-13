@@ -70,6 +70,43 @@ private lemma grid_boundary_segments_off_K
   sorry
 
 /--
+Goursat step: for a function holomorphic on `U \ {z}` and continuous on `U`
+(where `U` contains the closed rectangle and `z` lies in the open interior),
+the sum of the four oriented `segmentIntegral`s of `g` around the rectangle
+boundary equals zero. This is the off-countable Cauchy-Goursat theorem for a
+rectangle, converted to the `segmentIntegral` parametrisation used in this
+file.
+-/
+private lemma rectangle_holomorphic_part_integral_zero
+    {U : Set ℂ} {g : ℂ → ℂ} (hU : IsOpen U)
+    (x₀ y₀ s : ℝ) (hs : 0 < s)
+    (hrect_sub_U : ∀ w : ℂ, w.re ∈ Set.Icc x₀ (x₀ + s) →
+                            w.im ∈ Set.Icc y₀ (y₀ + s) → w ∈ U)
+    (z : ℂ) (hz_int : z.re ∈ Set.Ioo x₀ (x₀ + s) ∧ z.im ∈ Set.Ioo y₀ (y₀ + s))
+    (hg_cont : ContinuousOn g U)
+    (hg_diff : DifferentiableOn ℂ g (U \ {z})) :
+    segmentIntegral ⟨x₀, y₀⟩ ⟨x₀ + s, y₀⟩ g +
+    segmentIntegral ⟨x₀ + s, y₀⟩ ⟨x₀ + s, y₀ + s⟩ g +
+    segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ g +
+    segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ g = 0 := by
+  sorry
+
+/--
+The sum of the four oriented `segmentIntegral`s of `ζ ↦ 1/(ζ - z)` around the
+rectangle boundary equals `2πi`, when `z` lies in the open interior of the
+closed rectangle `[x₀, x₀+s] × [y₀, y₀+s]`.
+-/
+private lemma rectangle_integral_inv_eq_two_pi_I
+    (x₀ y₀ s : ℝ) (hs : 0 < s)
+    (z : ℂ) (hz_int : z.re ∈ Set.Ioo x₀ (x₀ + s) ∧ z.im ∈ Set.Ioo y₀ (y₀ + s)) :
+    segmentIntegral ⟨x₀, y₀⟩ ⟨x₀ + s, y₀⟩ (fun ζ => 1 / (ζ - z)) +
+    segmentIntegral ⟨x₀ + s, y₀⟩ ⟨x₀ + s, y₀ + s⟩ (fun ζ => 1 / (ζ - z)) +
+    segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ (fun ζ => 1 / (ζ - z)) +
+    segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ (fun ζ => 1 / (ζ - z)) =
+    2 * (Real.pi : ℂ) * Complex.I := by
+  sorry
+
+/--
 Cauchy's integral formula on a single rectangle with one pole inside
 (sub-obligation 3 — the Mathlib gap).
 
