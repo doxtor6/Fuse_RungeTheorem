@@ -70,6 +70,43 @@ private lemma grid_boundary_segments_off_K
   sorry
 
 /--
+Goursat step: for a function holomorphic on `U \ {z}` and continuous on `U`
+(where `U` contains the closed rectangle and `z` lies in the open interior),
+the sum of the four oriented `segmentIntegral`s of `g` around the rectangle
+boundary equals zero. This is the off-countable Cauchy-Goursat theorem for a
+rectangle, converted to the `segmentIntegral` parametrisation used in this
+file.
+-/
+private lemma rectangle_holomorphic_part_integral_zero
+    {U : Set ℂ} {g : ℂ → ℂ} (hU : IsOpen U)
+    (x₀ y₀ s : ℝ) (hs : 0 < s)
+    (hrect_sub_U : ∀ w : ℂ, w.re ∈ Set.Icc x₀ (x₀ + s) →
+                            w.im ∈ Set.Icc y₀ (y₀ + s) → w ∈ U)
+    (z : ℂ) (hz_int : z.re ∈ Set.Ioo x₀ (x₀ + s) ∧ z.im ∈ Set.Ioo y₀ (y₀ + s))
+    (hg_cont : ContinuousOn g U)
+    (hg_diff : DifferentiableOn ℂ g (U \ {z})) :
+    segmentIntegral ⟨x₀, y₀⟩ ⟨x₀ + s, y₀⟩ g +
+    segmentIntegral ⟨x₀ + s, y₀⟩ ⟨x₀ + s, y₀ + s⟩ g +
+    segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ g +
+    segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ g = 0 := by
+  sorry
+
+/--
+The sum of the four oriented `segmentIntegral`s of `ζ ↦ 1/(ζ - z)` around the
+rectangle boundary equals `2πi`, when `z` lies in the open interior of the
+closed rectangle `[x₀, x₀+s] × [y₀, y₀+s]`.
+-/
+private lemma rectangle_integral_inv_eq_two_pi_I
+    (x₀ y₀ s : ℝ) (hs : 0 < s)
+    (z : ℂ) (hz_int : z.re ∈ Set.Ioo x₀ (x₀ + s) ∧ z.im ∈ Set.Ioo y₀ (y₀ + s)) :
+    segmentIntegral ⟨x₀, y₀⟩ ⟨x₀ + s, y₀⟩ (fun ζ => 1 / (ζ - z)) +
+    segmentIntegral ⟨x₀ + s, y₀⟩ ⟨x₀ + s, y₀ + s⟩ (fun ζ => 1 / (ζ - z)) +
+    segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ (fun ζ => 1 / (ζ - z)) +
+    segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ (fun ζ => 1 / (ζ - z)) =
+    2 * (Real.pi : ℂ) * Complex.I := by
+  sorry
+
+/--
 Cauchy's integral formula on a single rectangle with one pole inside
 (sub-obligation 3 — the Mathlib gap).
 
@@ -78,12 +115,11 @@ For a function `f` holomorphic on an open neighborhood of a closed rectangle
 the line integral of `f(ζ)/(ζ - z)` along the positively oriented boundary
 of `R` equals `2πi · f(z)`.
 
-Mathlib has `Complex.integral_boundary_rect_eq_zero_of_differentiableOn`
-(Cauchy-Goursat for rectangles, no pole) and the analogous formula for
-circles, but not this rectangular version with one pole inside. It can be
-proven by subtracting `f(z) · 1/(ζ-z)` and computing the explicit integral
-of `1/(ζ-z)` around the rectangle boundary; we leave it stubbed here for a
-dedicated subagent.
+Glue proof: split `f(ζ)/(ζ - z) = dslope f z ζ + f z · (1/(ζ - z))` on each
+segment (which avoids `z` since `z` is interior). The `dslope` part has integral
+`0` around the rectangle boundary by Cauchy-Goursat on `U \ {z}`
+(`rectangle_holomorphic_part_integral_zero`), and the `1/(ζ - z)` part
+contributes `2πi` (`rectangle_integral_inv_eq_two_pi_I`).
 -/
 private lemma rectangle_cauchy_with_pole
     {U : Set ℂ} {f : ℂ → ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
@@ -96,7 +132,216 @@ private lemma rectangle_cauchy_with_pole
      segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ (fun ζ => f ζ / (ζ - z)) +
      segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ (fun ζ => f ζ / (ζ - z)))
     = 2 * (Real.pi : ℂ) * Complex.I * f z := by
-  sorry
+  -- Strategy: split f(ζ)/(ζ-z) = dslope f z ζ + f(z) * (1/(ζ-z)) on each segment.
+  -- The dslope part has integral 0 by Goursat; the 1/(ζ-z) part is 2πi.
+  set A : ℂ := ⟨x₀, y₀⟩ with hA
+  set B : ℂ := ⟨x₀ + s, y₀⟩ with hB
+  set C : ℂ := ⟨x₀ + s, y₀ + s⟩ with hC
+  set D : ℂ := ⟨x₀, y₀ + s⟩ with hD
+  -- z is in U (open interior ⊆ closed rectangle ⊆ U).
+  have hzU : z ∈ U :=
+    hrect_sub_U z ⟨le_of_lt hz_int.1.1, le_of_lt hz_int.1.2⟩
+                  ⟨le_of_lt hz_int.2.1, le_of_lt hz_int.2.2⟩
+  have hf_diff_z : DifferentiableAt ℂ f z :=
+    hf.differentiableAt (hU.mem_nhds hzU)
+  -- Pointwise identity: f(ζ)/(ζ - z) = dslope f z ζ + f z * (1/(ζ - z)).
+  have key_pointwise : ∀ ζ : ℂ, ζ ≠ z →
+      f ζ / (ζ - z) = dslope f z ζ + f z * (1 / (ζ - z)) := by
+    intro ζ hζ
+    rw [dslope_of_ne f hζ, slope_def_field]
+    have hne : ζ - z ≠ 0 := sub_ne_zero.mpr hζ
+    field_simp
+    ring
+  -- Each segment avoids z.
+  have hAB_avoid : ∀ t : ℝ, A + (t : ℂ) * (B - A) ≠ z := by
+    intro t hc
+    have him : (A + (t : ℂ) * (B - A)).im = y₀ := by
+      simp [hA, hB, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
+    have hzy : z.im ≠ y₀ := ne_of_gt hz_int.2.1
+    apply hzy
+    rw [← hc, him]
+  have hBC_avoid : ∀ t : ℝ, B + (t : ℂ) * (C - B) ≠ z := by
+    intro t hc
+    have hre : (B + (t : ℂ) * (C - B)).re = x₀ + s := by
+      simp [hB, hC, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
+            Complex.ofReal_im, Complex.sub_im]
+    have hzx : z.re ≠ x₀ + s := ne_of_lt hz_int.1.2
+    apply hzx
+    rw [← hc, hre]
+  have hCD_avoid : ∀ t : ℝ, C + (t : ℂ) * (D - C) ≠ z := by
+    intro t hc
+    have him : (C + (t : ℂ) * (D - C)).im = y₀ + s := by
+      simp [hC, hD, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
+    have hzy : z.im ≠ y₀ + s := ne_of_lt hz_int.2.2
+    apply hzy
+    rw [← hc, him]
+  have hDA_avoid : ∀ t : ℝ, D + (t : ℂ) * (A - D) ≠ z := by
+    intro t hc
+    have hre : (D + (t : ℂ) * (A - D)).re = x₀ := by
+      simp [hD, hA, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
+            Complex.ofReal_im, Complex.sub_im]
+    have hzx : z.re ≠ x₀ := ne_of_gt hz_int.1.1
+    apply hzx
+    rw [← hc, hre]
+  -- Each segment lies in U (it's in the closed rectangle).
+  have hAB_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, A + (t : ℂ) * (B - A) ∈ U := by
+    intro t ht
+    apply hrect_sub_U
+    · have hre_eq : (A + (t : ℂ) * (B - A)).re = x₀ + t * s := by
+        simp [hA, hB, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
+              Complex.ofReal_im]
+      rw [hre_eq]
+      refine ⟨?_, ?_⟩
+      · linarith [mul_nonneg ht.1 hs.le]
+      · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
+        linarith
+    · have him_eq : (A + (t : ℂ) * (B - A)).im = y₀ := by
+        simp [hA, hB, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
+      rw [him_eq]
+      exact ⟨le_refl _, by linarith⟩
+  have hBC_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, B + (t : ℂ) * (C - B) ∈ U := by
+    intro t ht
+    apply hrect_sub_U
+    · have hre_eq : (B + (t : ℂ) * (C - B)).re = x₀ + s := by
+        simp [hB, hC, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
+              Complex.ofReal_im]
+      rw [hre_eq]
+      exact ⟨by linarith, le_refl _⟩
+    · have him_eq : (B + (t : ℂ) * (C - B)).im = y₀ + t * s := by
+        simp [hB, hC, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
+      rw [him_eq]
+      refine ⟨?_, ?_⟩
+      · linarith [mul_nonneg ht.1 hs.le]
+      · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
+        linarith
+  have hCD_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, C + (t : ℂ) * (D - C) ∈ U := by
+    intro t ht
+    apply hrect_sub_U
+    · have hre_eq : (C + (t : ℂ) * (D - C)).re = (x₀ + s) - t * s := by
+        simp [hC, hD, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
+              Complex.ofReal_im]
+        ring
+      rw [hre_eq]
+      refine ⟨?_, ?_⟩
+      · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
+        linarith
+      · linarith [mul_nonneg ht.1 hs.le]
+    · have him_eq : (C + (t : ℂ) * (D - C)).im = y₀ + s := by
+        simp [hC, hD, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
+      rw [him_eq]
+      exact ⟨by linarith, le_refl _⟩
+  have hDA_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, D + (t : ℂ) * (A - D) ∈ U := by
+    intro t ht
+    apply hrect_sub_U
+    · have hre_eq : (D + (t : ℂ) * (A - D)).re = x₀ := by
+        simp [hD, hA, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
+              Complex.ofReal_im]
+      rw [hre_eq]
+      exact ⟨le_refl _, by linarith⟩
+    · have him_eq : (D + (t : ℂ) * (A - D)).im = (y₀ + s) - t * s := by
+        simp [hD, hA, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
+        ring
+      rw [him_eq]
+      refine ⟨?_, ?_⟩
+      · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
+        linarith
+      · linarith [mul_nonneg ht.1 hs.le]
+  -- dslope f z is continuous on U.
+  have hdslope_cont : ContinuousOn (dslope f z) U := by
+    rw [continuousOn_dslope (hU.mem_nhds hzU)]
+    exact ⟨hf.continuousOn, hf_diff_z⟩
+  -- dslope f z is differentiable on U \ {z}.
+  have hdslope_diff : DifferentiableOn ℂ (dslope f z) (U \ {z}) := by
+    intro w hw
+    apply DifferentiableAt.differentiableWithinAt
+    have hwne : w ≠ z := hw.2
+    have hwU : w ∈ U := hw.1
+    have hne_nhds : ∀ᶠ ζ in nhds w, ζ ≠ z := eventually_ne_nhds hwne
+    have h_evEq : (fun ζ : ℂ => (ζ - z)⁻¹ * (f ζ - f z)) =ᶠ[nhds w] dslope f z := by
+      filter_upwards [hne_nhds] with ζ hζ
+      rw [dslope_of_ne f hζ, slope_def_field, div_eq_inv_mul]
+    have hg_diff_at_w : DifferentiableAt ℂ (fun ζ : ℂ => (ζ - z)⁻¹ * (f ζ - f z)) w := by
+      apply DifferentiableAt.mul
+      · apply DifferentiableAt.inv
+        · exact differentiableAt_id.sub_const z
+        · exact sub_ne_zero.mpr hwne
+      · exact (hf.differentiableAt (hU.mem_nhds hwU)).sub_const (f z)
+    exact h_evEq.differentiableAt_iff.mp hg_diff_at_w
+  -- Parametrisation map is continuous as a function ℝ → ℂ.
+  have hparam_cont : ∀ (a b : ℂ), Continuous (fun t : ℝ => a + (t : ℂ) * (b - a)) :=
+    fun a b =>
+      continuous_const.add ((Complex.continuous_ofReal).mul continuous_const)
+  -- Continuity of dslope f z composed with each segment parametrisation.
+  have hdslope_cont_seg : ∀ (a b : ℂ), (∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∈ U) →
+      ContinuousOn (fun t : ℝ => dslope f z (a + (t : ℂ) * (b - a))) (Set.Icc (0:ℝ) 1) :=
+    fun a b h_in_U => hdslope_cont.comp (hparam_cont a b).continuousOn h_in_U
+  -- Continuity of 1/(ζ - z) composed with each segment parametrisation.
+  have hinv_cont_seg : ∀ (a b : ℂ), (∀ t : ℝ, a + (t : ℂ) * (b - a) ≠ z) →
+      ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) (Set.Icc (0:ℝ) 1) := by
+    intro a b h_avoid
+    apply ContinuousOn.div continuousOn_const
+    · exact ((hparam_cont a b).sub continuous_const).continuousOn
+    · intro t _
+      exact sub_ne_zero.mpr (h_avoid t)
+  -- Helper: split each segment integral into the dslope part and the f(z)·1/(ζ-z) part.
+  have seg_split : ∀ (a b : ℂ),
+      (∀ t : ℝ, a + (t : ℂ) * (b - a) ≠ z) →
+      (∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∈ U) →
+      segmentIntegral a b (fun ζ => f ζ / (ζ - z)) =
+        segmentIntegral a b (dslope f z) +
+          f z * segmentIntegral a b (fun ζ => 1 / (ζ - z)) := by
+    intro a b h_avoid h_in_U
+    unfold segmentIntegral
+    have eq_int : ∀ t ∈ Set.uIcc (0:ℝ) 1,
+        (fun ζ : ℂ => f ζ / (ζ - z)) (a + (t : ℂ) * (b - a)) * (b - a) =
+        (dslope f z) (a + (t : ℂ) * (b - a)) * (b - a) +
+          f z * ((fun ζ : ℂ => 1 / (ζ - z)) (a + (t : ℂ) * (b - a)) * (b - a)) := by
+      intro t _
+      have h := key_pointwise (a + (t : ℂ) * (b - a)) (h_avoid t)
+      simp only [h]
+      ring
+    rw [intervalIntegral.integral_congr eq_int]
+    have hi₁ : IntervalIntegrable (fun t : ℝ =>
+        (dslope f z) (a + (t : ℂ) * (b - a)) * (b - a))
+        MeasureTheory.volume 0 1 := by
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.mul
+      · rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)]
+        exact hdslope_cont_seg a b h_in_U
+      · exact continuousOn_const
+    have hi₂ : IntervalIntegrable (fun t : ℝ =>
+        f z * ((fun ζ : ℂ => 1 / (ζ - z)) (a + (t : ℂ) * (b - a)) * (b - a)))
+        MeasureTheory.volume 0 1 := by
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.mul continuousOn_const
+      apply ContinuousOn.mul
+      · rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)]
+        exact hinv_cont_seg a b h_avoid
+      · exact continuousOn_const
+    rw [intervalIntegral.integral_add hi₁ hi₂]
+    rw [← intervalIntegral.integral_const_mul]
+  -- Apply seg_split to each of the four segments.
+  have hAB := seg_split A B hAB_avoid hAB_in_U
+  have hBC := seg_split B C hBC_avoid hBC_in_U
+  have hCD := seg_split C D hCD_avoid hCD_in_U
+  have hDA := seg_split D A hDA_avoid hDA_in_U
+  rw [hAB, hBC, hCD, hDA]
+  -- Now the sum has two pieces. Goursat for dslope; explicit 2πi for the inverse part.
+  have h_dslope_zero :
+      segmentIntegral A B (dslope f z) + segmentIntegral B C (dslope f z) +
+        segmentIntegral C D (dslope f z) + segmentIntegral D A (dslope f z) = 0 := by
+    have := rectangle_holomorphic_part_integral_zero hU x₀ y₀ s hs hrect_sub_U z hz_int
+      hdslope_cont hdslope_diff
+    simpa [hA, hB, hC, hD] using this
+  have h_inv :
+      segmentIntegral A B (fun ζ => 1 / (ζ - z)) +
+        segmentIntegral B C (fun ζ => 1 / (ζ - z)) +
+        segmentIntegral C D (fun ζ => 1 / (ζ - z)) +
+        segmentIntegral D A (fun ζ => 1 / (ζ - z)) =
+        2 * (Real.pi : ℂ) * Complex.I := by
+    have := rectangle_integral_inv_eq_two_pi_I x₀ y₀ s hs z hz_int
+    simpa [hA, hB, hC, hD] using this
+  linear_combination h_dslope_zero + f z * h_inv
 
 /--
 Grid-contour Cauchy representation (sub-lemma 1).
