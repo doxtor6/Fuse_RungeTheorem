@@ -132,7 +132,7 @@ lemma far_pole_polynomial_approx
     have hM_nonneg : 0 ≤ M := norm_nonneg _
     have hb_ne : b ≠ 0 := by
       intro hb0
-      have : ‖b‖ = 0 := by rw [hb0]; simp
+      have hbz : ‖b‖ = 0 := by rw [hb0]; simp
       linarith [hM_nonneg]
     have hb_pos : 0 < ‖b‖ := norm_pos_iff.mpr hb_ne
     set q : ℝ := M / ‖b‖ with hq_def
@@ -147,65 +147,106 @@ lemma far_pole_polynomial_approx
       have h₂ := h₁.div_const (‖b‖ - M)
       simpa using h₂
     have hev : ∀ᶠ n in Filter.atTop, q ^ n / (‖b‖ - M) < ε := by
-      have := (Metric.tendsto_atTop.mp htends) ε hε
-      obtain ⟨N, hN⟩ := this
+      rw [Metric.tendsto_atTop] at htends
+      obtain ⟨N, hN⟩ := htends ε hε
       filter_upwards [Filter.eventually_ge_atTop N] with n hn
-      have := hN n hn
-      simp only [Real.dist_eq, sub_zero] at this
+      have hd := hN n hn
+      simp only [Real.dist_eq, sub_zero] at hd
       have hpos : 0 ≤ q ^ n / (‖b‖ - M) :=
         div_nonneg (pow_nonneg hq_nonneg _) hgap_pos.le
-      rw [abs_of_nonneg hpos] at this
-      exact this
+      rwa [abs_of_nonneg hpos] at hd
     obtain ⟨N, hN⟩ := hev.exists
     -- Step 3: Build polynomial p(z) = -∑_{n=0}^{N-1} z^n / b^{n+1}.
     refine ⟨∑ n ∈ Finset.range N,
-      Polynomial.C (-(1 / b ^ (n + 1))) * Polynomial.X ^ n, ?_⟩
+      Polynomial.C (-(b ^ (n + 1))⁻¹) * Polynomial.X ^ n, ?_⟩
     intro z hzK
+    have hzbound : ‖z‖ ≤ M := hM_bound z hzK
     -- Evaluate the polynomial.
     have heval :
         (∑ n ∈ Finset.range N,
-            Polynomial.C (-(1 / b ^ (n + 1))) * Polynomial.X ^ n).eval z =
-          ∑ n ∈ Finset.range N, -(z ^ n / b ^ (n + 1)) := by
-      rw [Polynomial.eval_finset_sum]
+            Polynomial.C (-(b ^ (n + 1))⁻¹) * Polynomial.X ^ n).eval z =
+          -∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1) := by
+      rw [Polynomial.eval_finset_sum, ← Finset.sum_neg_distrib]
       apply Finset.sum_congr rfl
       intro n _
       simp [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow,
-            Polynomial.eval_X, neg_div, div_eq_mul_inv, mul_comm]
+            Polynomial.eval_X, div_eq_mul_inv, mul_comm]
     rw [heval]
     -- z ≠ b since ‖z‖ < ‖b‖
+    have hzlt : ‖z‖ < ‖b‖ := hb z hzK
     have hzne : z - b ≠ 0 := by
       intro h
-      have : z = b := by linarith [sub_eq_zero.mp h]
-      have hzb : ‖z‖ = ‖b‖ := by rw [this]
-      have : ‖z‖ < ‖b‖ := hb z hzK
-      linarith
-    -- Key identity: -S - 1/(z-b) = (z/b)^N / (z-b) but with negative...
-    -- Let's compute: S = ∑ z^n/b^{n+1}, partial sum identity:
-    -- (z - b) * S = ∑ z^{n+1}/b^{n+1} - ∑ z^n/b^n = (z/b)^N - 1
-    -- So S = ((z/b)^N - 1)/(z - b), hence -S - 1/(z-b) = -(z/b)^N/(z-b).
+      have hzeq : z = b := sub_eq_zero.mp h
+      rw [hzeq] at hzlt; exact lt_irrefl _ hzlt
     have hb_pow_ne : ∀ n, (b ^ n : ℂ) ≠ 0 := fun n => pow_ne_zero n hb_ne
+    have hbN_ne : (b ^ N : ℂ) ≠ 0 := hb_pow_ne N
+    -- Key identity: -∑ z^n/b^{n+1} - 1/(z-b) = -z^N / (b^N (z - b)).
     have hkey :
-        (∑ n ∈ Finset.range N, -(z ^ n / b ^ (n + 1))) - 1 / (z - b) =
+        (-∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1)) - 1 / (z - b) =
           -(z ^ N / (b ^ N * (z - b))) := by
-      have hS :
-          (z - b) * (∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1)) =
-            (z / b) ^ N - 1 := by
-        rw [Finset.mul_sum]
-        have :
-            ∀ n ∈ Finset.range N,
-              (z - b) * (z ^ n / b ^ (n + 1)) =
-                (z / b) ^ (n + 1) - (z / b) ^ n := by
-          intro n _
-          have hbn : (b ^ n : ℂ) ≠ 0 := hb_pow_ne n
-          have hbn1 : (b ^ (n + 1) : ℂ) ≠ 0 := hb_pow_ne (n + 1)
-          field_simp
-          ring
-        rw [Finset.sum_congr rfl this]
-        rw [Finset.sum_range_succ_comm] <;> try rfl
-        -- telescoping
+      -- The cleanest path: factor out 1/b from each term: z^n/b^{n+1} = (1/b) * (z/b)^n.
+      -- Then sum is (1/b) * ∑ (z/b)^n = (1/b) * ((z/b)^N - 1)/(z/b - 1) = ((z/b)^N - 1)/(z - b).
+      have hzbne : z / b ≠ 1 := by
+        intro h
+        have : z = b := by field_simp at h; linarith [h]
+        rw [this] at hzlt; exact lt_irrefl _ hzlt
+      have hgeom : ∑ n ∈ Finset.range N, (z / b) ^ n = ((z / b) ^ N - 1) / (z / b - 1) :=
+        geom_sum_eq hzbne N
+      have hrew : ∀ n, z ^ n / b ^ (n + 1) = (z / b) ^ n / b := by
+        intro n
+        rw [pow_succ, div_pow]
+        field_simp
+      have hsum_eq :
+          ∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1) =
+            ((z / b) ^ N - 1) / (z - b) := by
+        have : ∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1) =
+            (∑ n ∈ Finset.range N, (z / b) ^ n) / b := by
+          rw [Finset.sum_div]
+          apply Finset.sum_congr rfl
+          intro n _; exact hrew n
+        rw [this, hgeom]
+        have hzb_ne : z / b - 1 ≠ 0 := sub_ne_zero.mpr hzbne
+        field_simp
+        ring
+      rw [hsum_eq]
+      have hzbpow : (z / b) ^ N = z ^ N / b ^ N := div_pow z b N
+      rw [hzbpow]
+      field_simp
+      ring
+    rw [hkey]
+    -- Step 4: Bound the norm.
+    rw [norm_neg]
+    rw [norm_div, norm_mul, norm_pow, norm_pow]
+    -- Now we have ‖z‖^N / (‖b‖^N * ‖z - b‖).
+    -- Show this ≤ q^N / (‖b‖ - M) < ε.
+    have hzb_norm : ‖b‖ - M ≤ ‖z - b‖ := by
+      have h1 : ‖b‖ - ‖z‖ ≤ ‖z - b‖ := by
+        rw [norm_sub_rev]
+        exact norm_sub_norm_le b z
+      linarith [hM_bound z hzK]
+    have hzb_norm_pos : 0 < ‖z - b‖ := lt_of_lt_of_le hgap_pos hzb_norm
+    have hbN_norm_pos : 0 < ‖b‖ ^ N := pow_pos hb_pos N
+    have hzN_norm_nn : 0 ≤ ‖z‖ ^ N := pow_nonneg (norm_nonneg z) N
+    have hineq : ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖) ≤ q ^ N / (‖b‖ - M) := by
+      have hq_pow_eq : q ^ N = M ^ N / ‖b‖ ^ N := by
+        rw [hq_def, div_pow]
+      rw [hq_pow_eq]
+      -- ‖z‖^N / (‖b‖^N * ‖z - b‖) ≤ M^N / ‖b‖^N / (‖b‖ - M)
+      -- = M^N / (‖b‖^N * (‖b‖ - M)).
+      have rhs_eq : M ^ N / ‖b‖ ^ N / (‖b‖ - M) =
+          M ^ N / (‖b‖ ^ N * (‖b‖ - M)) := by
+        rw [div_div]
+      rw [rhs_eq]
+      apply div_le_div_of_nonneg_left₀ ?_ ?_ ?_
+      rotate_left
+      · exact mul_pos hbN_norm_pos hgap_pos
+      · apply mul_le_mul_of_nonneg_left hzb_norm hbN_norm_pos.le
+      · -- 0 ≤ M^N (since 0 ≤ M)... but we need ‖z‖^N ≤ M^N
         sorry
-      sorry
-    sorry
+    -- Combine with hN.
+    calc ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖)
+        ≤ q ^ N / (‖b‖ - M) := hineq
+      _ < ε := hN
   · -- K is empty: any polynomial works
     refine ⟨0, ?_⟩
     intro z hz
