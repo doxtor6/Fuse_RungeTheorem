@@ -688,25 +688,31 @@ theorem single_pole_polynomial_approx
   have hchain_step : ∀ i : Fin (m + 1),
       ‖chain i.castSucc - chain i.succ‖ < Metric.infDist (chain i.succ) K := by
     intro i
+    set tcs : unitInterval := ⟨(i.castSucc : ℝ) / (m + 1), hti_mem i.castSucc⟩ with htcs_def
+    set tsucc : unitInterval := ⟨(i.succ : ℝ) / (m + 1), hti_mem i.succ⟩ with htsucc_def
+    have hchain_eq_cs : chain i.castSucc = γc tcs := rfl
+    have hchain_eq_succ : chain i.succ = γc tsucc := rfl
     have h1 : dist (chain i.castSucc) (chain i.succ) < ρ := by
+      rw [hchain_eq_cs, hchain_eq_succ]
       apply hδ
-      simp only [hchain_def]
       rw [Subtype.dist_eq]
       simp only [Real.dist_eq]
       have hcs : ((i.castSucc : Fin (m + 2)) : ℝ) = (i : ℝ) := by
         simp [Fin.castSucc]
       have hsucc : ((i.succ : Fin (m + 2)) : ℝ) = (i : ℝ) + 1 := by
-        simp [Fin.succ]
+        push_cast
+        rfl
+      show |((i.castSucc : Fin (m + 2)) : ℝ) / (m + 1) -
+        ((i.succ : Fin (m + 2)) : ℝ) / (m + 1)| < δ
       rw [hcs, hsucc]
       have hmpos : (0 : ℝ) < m + 1 := by positivity
-      rw [div_sub_div_eq_sub_div]
-      rw [abs_div, abs_of_pos hmpos]
-      have : |(i : ℝ) - ((i : ℝ) + 1)| = 1 := by
-        rw [show (i : ℝ) - ((i : ℝ) + 1) = -1 by ring]
-        simp
-      rw [this]
+      rw [div_sub_div_eq_sub_div, abs_div, abs_of_pos hmpos]
+      have hsimp : |(i : ℝ) - ((i : ℝ) + 1)| = 1 := by
+        rw [show (i : ℝ) - ((i : ℝ) + 1) = -1 by ring]; simp
+      rw [hsimp]
       exact hm_lt
-    have h2 := himg_dist ⟨((i.succ : Fin (m + 2)) : ℝ) / (m + 1), _⟩
+    have h2 : ρ ≤ Metric.infDist (chain i.succ) K := by
+      rw [hchain_eq_succ]; exact himg_dist tsucc
     have h3 : ‖chain i.castSucc - chain i.succ‖ = dist (chain i.castSucc) (chain i.succ) := by
       rw [Complex.dist_eq]
     rw [h3]
@@ -730,13 +736,11 @@ theorem single_pole_polynomial_approx
       apply Subtype.ext
       show ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) / (m + 1) = 1
       have hval : ((Fin.last (m + 1) : Fin (m + 2)) : ℕ) = m + 1 := Fin.val_last (m + 1)
-      have hcast : ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) = ((m + 1 : ℕ) : ℝ) := by
-        rw [show ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) =
-          ((((Fin.last (m + 1) : Fin (m + 2)) : ℕ) : ℝ)) from rfl, hval]
+      have hcast : ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) = (m : ℝ) + 1 := by
+        show ((((Fin.last (m + 1) : Fin (m + 2)) : ℕ)) : ℝ) = (m : ℝ) + 1
+        rw [hval]; push_cast; ring
       rw [hcast]
-      have hmpos : ((m + 1 : ℕ) : ℝ) ≠ 0 := by
-        have : (0 : ℝ) < m + 1 := by positivity
-        push_cast; linarith
+      have hmpos : ((m : ℝ) + 1) ≠ 0 := by positivity
       field_simp
     rw [h1]
     show (γ (1 : unitInterval)).val = b
