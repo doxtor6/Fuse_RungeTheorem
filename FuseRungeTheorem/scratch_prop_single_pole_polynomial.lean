@@ -606,7 +606,231 @@ theorem single_pole_polynomial_approx
     {a : ℂ} (ha : a ∉ K) :
     ∀ ε > 0, ∃ p : Polynomial ℂ,
       ∀ z ∈ K, ‖p.eval z - 1 / (z - a)‖ < ε := by
-  sorry
+  intro ε hε
+  -- Handle empty K trivially.
+  by_cases hKemp : K = ∅
+  · refine ⟨0, ?_⟩
+    intro z hz; rw [hKemp] at hz; exact absurd hz (Set.notMem_empty z)
+  have hKne : K.Nonempty := Set.nonempty_iff_ne_empty.mpr hKemp
+  -- Get a uniform bound R on ‖z‖ for z ∈ K.
+  have hcont : ContinuousOn (fun z : ℂ => ‖z‖) K := continuous_norm.continuousOn
+  obtain ⟨z₀, _hz₀K, hz₀max⟩ := hK.exists_isMaxOn hKne hcont
+  set M : ℝ := ‖z₀‖ with hM_def
+  have hM_bound : ∀ z ∈ K, ‖z‖ ≤ M := fun z hz => hz₀max hz
+  set R : ℝ := M + 1 with hR_def
+  have hR_lt : ∀ z ∈ K, ‖z‖ < R := fun z hz => by
+    rw [hR_def]; linarith [hM_bound z hz]
+  -- Get b ∉ K with ‖b‖ > R and a path γ from a to b in Kᶜ.
+  obtain ⟨b, hb, γ, hRb⟩ := path_to_infinity_in_connected_complement hK hKc ha R
+  have hKc_open : IsOpen (Kᶜ : Set ℂ) := hK.isClosed.isOpen_compl
+  -- The range of γ (in ℂ) is compact, in Kᶜ.
+  set γc : C(unitInterval, ℂ) :=
+    ⟨fun t => ((γ : C(unitInterval, (Kᶜ : Set ℂ))) t).val,
+      Continuous.subtype_val (γ : C(unitInterval, (Kᶜ : Set ℂ))).continuous⟩ with hγc_def
+  set image : Set ℂ := Set.range γc with himg_def
+  have himg_compact : IsCompact image := isCompact_range γc.continuous
+  have himg_subset : image ⊆ (Kᶜ : Set ℂ) := by
+    rintro x ⟨t, rfl⟩
+    exact (γ t).property
+  -- Get ρ > 0 such that thickening ρ of image is in Kᶜ.
+  obtain ⟨ρ, hρ_pos, hρ_subset⟩ :=
+    compact_subset_open_has_thickening himg_compact hKc_open himg_subset
+  -- Each point in image has infDist to K ≥ ρ.
+  have himg_dist : ∀ t : unitInterval, ρ ≤ Metric.infDist (γc t) K := by
+    intro t
+    have ht_in : γc t ∈ image := ⟨t, rfl⟩
+    by_contra hlt
+    push_neg at hlt
+    -- infDist (γc t) K < ρ, so ∃ x ∈ K with dist (γc t) x < ρ.
+    -- Then x ∈ thickening ρ image ⊆ Kᶜ, contradicting x ∈ K.
+    have hKclosed : IsClosed K := hK.isClosed
+    have hd_lt : ∃ x ∈ K, dist (γc t) x < ρ := by
+      have := Metric.exists_dist_lt_of_infDist_lt hlt hKne
+      obtain ⟨x, hxK, hxdist⟩ := this
+      exact ⟨x, hxK, hxdist⟩
+    obtain ⟨x, hxK, hxd⟩ := hd_lt
+    have hx_thick : x ∈ Metric.thickening ρ image := by
+      rw [Metric.mem_thickening_iff_infDist_lt ⟨γc t, ht_in⟩]
+      calc Metric.infDist x image ≤ dist x (γc t) :=
+            Metric.infDist_le_dist_of_mem ht_in
+        _ = dist (γc t) x := dist_comm x (γc t)
+        _ < ρ := hxd
+    have hx_in_Kc : x ∈ (Kᶜ : Set ℂ) := hρ_subset hx_thick
+    exact hx_in_Kc hxK
+  -- Uniform continuity of γc gives δ > 0 such that |s-t| < δ ⟹ ‖γc s - γc t‖ < ρ.
+  have hγc_ucont : UniformContinuous γc :=
+    CompactSpace.uniformContinuous_of_continuous γc.continuous
+  rw [Metric.uniformContinuous_iff] at hγc_ucont
+  obtain ⟨δ, hδ_pos, hδ⟩ := hγc_ucont ρ hρ_pos
+  -- Choose m large enough so that 1/(m+1) < δ.
+  obtain ⟨m, hm_lt⟩ : ∃ m : ℕ, (1 : ℝ) / (m + 1) < δ := by
+    have := exists_nat_one_div_lt hδ_pos
+    obtain ⟨m, hm⟩ := this
+    exact ⟨m, by exact_mod_cast hm⟩
+  -- Build the chain at points i/(m+1) ∈ [0,1].
+  set chain : Fin (m + 2) → ℂ := fun i =>
+    γc ⟨(i : ℝ) / (m + 1), unitInterval.div_mem
+      (by exact_mod_cast Nat.zero_le _) (by positivity)
+      (by
+        have : (i : ℝ) ≤ (m + 1 : ℕ) := by
+          have := Fin.is_le' (i := i)
+          exact_mod_cast this.trans (by omega)
+        simp; exact this)⟩ with hchain_def
+  have hchain_notin : ∀ i, chain i ∉ K := by
+    intro i hin
+    have : γc _ ∈ image := ⟨_, rfl⟩
+    have hd := himg_dist ⟨(i : ℝ) / (m + 1), _⟩
+    have hd0 : (0 : ℝ) < Metric.infDist (γc _) K := lt_of_lt_of_le hρ_pos hd
+    have hKclosed : IsClosed K := hK.isClosed
+    have : Metric.infDist (γc _) K = 0 := by
+      have : γc _ ∈ K := hin
+      exact Metric.infDist_zero_of_mem this
+    linarith
+  have hchain_step : ∀ i : Fin (m + 1),
+      ‖chain i.castSucc - chain i.succ‖ < Metric.infDist (chain i.succ) K := by
+    intro i
+    have h1 : dist (chain i.castSucc) (chain i.succ) < ρ := by
+      apply hδ
+      simp only [hchain_def]
+      rw [Subtype.dist_eq]
+      simp only [Real.dist_eq]
+      have hcs : ((i.castSucc : Fin (m + 2)) : ℝ) = (i : ℝ) := by
+        simp [Fin.castSucc]
+      have hsucc : ((i.succ : Fin (m + 2)) : ℝ) = (i : ℝ) + 1 := by
+        simp [Fin.succ]
+      rw [hcs, hsucc]
+      have hmpos : (0 : ℝ) < m + 1 := by positivity
+      rw [div_sub_div_eq_sub_div]
+      rw [abs_div, abs_of_pos hmpos]
+      have : |(i : ℝ) - ((i : ℝ) + 1)| = 1 := by
+        rw [show (i : ℝ) - ((i : ℝ) + 1) = -1 by ring]
+        simp
+      rw [this]
+      exact hm_lt
+    have h2 := himg_dist ⟨((i.succ : Fin (m + 2)) : ℝ) / (m + 1), _⟩
+    have h3 : ‖chain i.castSucc - chain i.succ‖ = dist (chain i.castSucc) (chain i.succ) := by
+      rw [Complex.dist_eq]
+    rw [h3]
+    exact lt_of_lt_of_le h1 h2
+  -- Apply pole_move_polynomial_chain with P = X, ε/2.
+  -- Need: chain 0 = a, chain (Fin.last (m+1)) = b.
+  have hchain_zero : chain 0 = a := by
+    show γc ⟨(0 : ℝ) / (m + 1), _⟩ = a
+    have hzero : ((0 : Fin (m + 2)) : ℝ) / (m + 1) = 0 := by simp
+    have h0 : (⟨(0 : ℝ) / (m + 1), _⟩ : unitInterval) = (0 : unitInterval) := by
+      apply Subtype.ext
+      simp
+    rw [h0]
+    show ((γ 0 : (Kᶜ : Set ℂ))).val = a
+    rw [γ.source]
+  have hchain_last : chain (Fin.last (m + 1)) = b := by
+    show γc ⟨((m + 1 : ℕ) : ℝ) / (m + 1), _⟩ = b
+    have hone : (⟨((m + 1 : ℕ) : ℝ) / (m + 1), _⟩ : unitInterval) = (1 : unitInterval) := by
+      apply Subtype.ext
+      show ((m + 1 : ℕ) : ℝ) / (m + 1) = 1
+      have hmpos : (0 : ℝ) < m + 1 := by positivity
+      have : ((m + 1 : ℕ) : ℝ) = m + 1 := by push_cast; ring
+      rw [this]; field_simp
+    have hcast : (Fin.last (m + 1) : Fin (m + 2)) = ⟨m + 1, by omega⟩ := rfl
+    rw [hcast]
+    have : (((⟨m + 1, by omega⟩ : Fin (m + 2)) : ℕ) : ℝ) = ((m + 1 : ℕ) : ℝ) := by
+      simp
+    show γc ⟨(((⟨m + 1, by omega⟩ : Fin (m + 2)) : ℕ) : ℝ) / (m + 1), _⟩ = b
+    rw [show (⟨(((⟨m + 1, by omega⟩ : Fin (m + 2)) : ℕ) : ℝ) / (m + 1), _⟩ : unitInterval) = (1 : unitInterval) from by
+      apply Subtype.ext; show _ = (1 : ℝ); rw [this]
+      have hmpos : (0 : ℝ) < m + 1 := by positivity
+      have hh : ((m + 1 : ℕ) : ℝ) = m + 1 := by push_cast; ring
+      rw [hh]; field_simp]
+    show ((γ 1 : (Kᶜ : Set ℂ))).val = b
+    rw [γ.target]
+  obtain ⟨Q, hQ⟩ := pole_move_polynomial_chain hK (m + 1) chain hchain_notin hchain_step
+    Polynomial.X (ε / 2) (by linarith)
+  -- Now use far_pole_polynomial_approx to approximate 1/(z-b) by a polynomial, then compose.
+  -- First, get uniform continuity of Q on a closed ball.
+  -- Bound for 1/(z-b): for z ∈ K, ‖z - b‖ ≥ ‖b‖ - ‖z‖ ≥ R - M = 1.
+  have hzb_ge_one : ∀ z ∈ K, (1 : ℝ) ≤ ‖z - b‖ := by
+    intro z hz
+    have h1 : ‖b‖ - ‖z‖ ≤ ‖z - b‖ := by
+      rw [norm_sub_rev]; exact norm_sub_norm_le b z
+    have h2 : R < ‖b‖ := hRb
+    have h3 : ‖z‖ ≤ M := hM_bound z hz
+    have h4 : R - M = 1 := by rw [hR_def]; ring
+    linarith
+  have hzb_ne : ∀ z ∈ K, z - b ≠ 0 := by
+    intro z hz hzeq
+    have hh := hzb_ge_one z hz
+    have : ‖z - b‖ = 0 := by rw [hzeq]; simp
+    linarith
+  have hinv_zb_norm : ∀ z ∈ K, ‖(1 / (z - b) : ℂ)‖ ≤ 1 := by
+    intro z hz
+    rw [norm_div, norm_one]
+    have h := hzb_ge_one z hz
+    have hzbpos : 0 < ‖z - b‖ := lt_of_lt_of_le (by norm_num : (0:ℝ) < 1) h
+    rw [div_le_iff₀ hzbpos]
+    linarith
+  -- Use uniform continuity of Q on closed ball of radius 2.
+  have hQcont : ContinuousOn (fun w : ℂ => Q.eval w) (Metric.closedBall (0 : ℂ) 2) :=
+    Q.continuous.continuousOn
+  have hQcomp : IsCompact (Metric.closedBall (0 : ℂ) 2) := isCompact_closedBall _ _
+  have hQucon : UniformContinuousOn (fun w : ℂ => Q.eval w) (Metric.closedBall (0 : ℂ) 2) :=
+    hQcomp.uniformContinuousOn_of_continuous hQcont
+  rw [Metric.uniformContinuousOn_iff] at hQucon
+  obtain ⟨η, hη_pos, hη⟩ := hQucon (ε / 2) (by linarith)
+  set η' : ℝ := min η 1 with hη'_def
+  have hη'_pos : 0 < η' := lt_min hη_pos one_pos
+  have hη'_le_η : η' ≤ η := min_le_left _ _
+  have hη'_le_one : η' ≤ 1 := min_le_right _ _
+  -- Get p₀ : Polynomial ℂ such that ‖p₀.eval z - 1/(z-b)‖ < η' on K.
+  have hb_dom : ∀ z ∈ K, ‖z‖ < ‖b‖ := fun z hz => by
+    have h1 := hR_lt z hz
+    have h2 : R < ‖b‖ := hRb
+    linarith
+  obtain ⟨p₀, hp₀⟩ := far_pole_polynomial_approx hK hb_dom η' hη'_pos
+  -- Final polynomial: Q.comp p₀.
+  refine ⟨Q.comp p₀, ?_⟩
+  intro z hz
+  have hQpz : (Q.comp p₀).eval z = Q.eval (p₀.eval z) := Polynomial.eval_comp
+  -- Goal: ‖(Q.comp p₀).eval z - 1/(z-a)‖ < ε.
+  -- Split: ≤ ‖Q.eval(p₀.eval z) - Q.eval(1/(z-b))‖ + ‖Q.eval(1/(z-b)) - 1/(z-a)‖.
+  -- First part: by uniform continuity, < ε/2.
+  -- Second part: by hQ z (with hchain_zero and hchain_last), < ε/2.
+  have hp₀_z := hp₀ z hz
+  have hinvzb := hinv_zb_norm z hz
+  -- p₀.eval z is close to 1/(z-b), so ‖p₀.eval z‖ ≤ 2.
+  have hp₀_norm : ‖p₀.eval z‖ ≤ 2 := by
+    have h1 : ‖p₀.eval z‖ ≤ ‖1 / (z - b)‖ + ‖p₀.eval z - 1 / (z - b)‖ := by
+      have := norm_add_le (1 / (z - b) : ℂ) (p₀.eval z - 1 / (z - b))
+      have heq : (1 / (z - b) : ℂ) + (p₀.eval z - 1 / (z - b)) = p₀.eval z := by ring
+      rw [heq] at this; exact this
+    linarith [hη'_le_one]
+  have hp₀_mem : p₀.eval z ∈ Metric.closedBall (0 : ℂ) 2 := by
+    rw [Metric.mem_closedBall, dist_zero_right]; exact hp₀_norm
+  have hinv_mem : (1 / (z - b) : ℂ) ∈ Metric.closedBall (0 : ℂ) 2 := by
+    rw [Metric.mem_closedBall, dist_zero_right]; linarith [hinvzb]
+  have hdist_p₀_inv : dist (p₀.eval z) (1 / (z - b)) < η := by
+    rw [dist_eq_norm]
+    linarith [hp₀_z, hη'_le_η]
+  have hQ_close : ‖Q.eval (p₀.eval z) - Q.eval (1 / (z - b))‖ < ε / 2 := by
+    have := hη (p₀.eval z) hp₀_mem (1 / (z - b)) hinv_mem hdist_p₀_inv
+    rwa [dist_eq_norm] at this
+  have hQ_z := hQ z hz
+  rw [hchain_zero, hchain_last] at hQ_z
+  have hXeval : (Polynomial.X : Polynomial ℂ).eval (1 / (z - a)) = 1 / (z - a) :=
+    Polynomial.eval_X
+  rw [hXeval] at hQ_z
+  rw [hQpz]
+  -- Triangle inequality.
+  have htri := norm_add_le
+    (Q.eval (p₀.eval z) - Q.eval (1 / (z - b)))
+    (Q.eval (1 / (z - b)) - 1 / (z - a))
+  have heq : (Q.eval (p₀.eval z) - Q.eval (1 / (z - b))) +
+      (Q.eval (1 / (z - b)) - 1 / (z - a)) =
+      Q.eval (p₀.eval z) - 1 / (z - a) := by ring
+  rw [heq] at htri
+  have : ‖Q.eval (1 / (z - b)) - 1 / (z - a)‖ < ε / 2 := by
+    have : ‖1 / (z - a) - Q.eval (1 / (z - b))‖ < ε / 2 := hQ_z
+    rw [norm_sub_rev] at this; exact this
+  linarith
 
 /--
 Finite pole sums are polynomially approximable.
