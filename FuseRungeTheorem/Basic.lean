@@ -40,8 +40,8 @@ theorem rational_approximation_with_poles_off
     (hf : DifferentiableOn ℂ f U) :
     ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ),
       (∀ j, a j ∉ K) ∧
-      ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε := by
-  sorry
+      ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε :=
+  cauchy_integral_approximated_by_pole_sum hK hU hKU hf
 
 /--
 The complement of a compact subset of `ℂ` is unbounded: for every radius `R`
