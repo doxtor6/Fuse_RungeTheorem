@@ -169,8 +169,10 @@ lemma far_pole_polynomial_approx
       rw [Polynomial.eval_finset_sum, ← Finset.sum_neg_distrib]
       apply Finset.sum_congr rfl
       intro n _
-      simp [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow,
-            Polynomial.eval_X, div_eq_mul_inv, mul_comm]
+      rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow,
+          Polynomial.eval_X]
+      rw [div_eq_mul_inv, neg_mul, neg_neg]
+      ring
     rw [heval]
     -- z ≠ b since ‖z‖ < ‖b‖
     have hzlt : ‖z‖ < ‖b‖ := hb z hzK

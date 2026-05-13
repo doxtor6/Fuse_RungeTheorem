@@ -8,5 +8,6 @@
   "leanDeclaration": "local_pole_moving",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "HARD",
-  "notes": "Signature: `lemma local_pole_moving {K : Set ℂ} (hK : IsCompact K) {a b : ℂ} (ha : a ∉ K) (hb : b ∉ K) (hab : ‖a - b‖ < Metric.infDist b K) : ∀ ε > 0, ∃ N : ℕ, ∀ z ∈ K, ‖1 / (z - a) - ∑ n ∈ Finset.range (N + 1), (a - b) ^ n / (z - b) ^ (n + 1)‖ < ε`. Partial sum `∑ n ∈ Finset.range (N+1)` matches blueprint `∑_{n=0}^{N}`. Hypotheses `a ∉ K`, `b ∉ K` retained from blueprint even though `b ∉ K` follows from `hab` and the compactness of `K` (so `Metric.infDist b K > 0` forces `b ∉ K` when `K` is closed)."
+  "notes": "Signature: `lemma local_pole_moving {K : Set ℂ} (hK : IsCompact K) {a b : ℂ} (ha : a ∉ K) (hb : b ∉ K) (hab : ‖a - b‖ < Metric.infDist b K) : ∀ ε > 0, ∃ N : ℕ, ∀ z ∈ K, ‖1 / (z - a) - ∑ n ∈ Finset.range (N + 1), (a - b) ^ n / (z - b) ^ (n + 1)‖ < ε`. Partial sum `∑ n ∈ Finset.range (N+1)` matches blueprint `∑_{n=0}^{N}`. Hypotheses `a ∉ K`, `b ∉ K` retained from blueprint even though `b ∉ K` follows from `hab` and the compactness of `K` (so `Metric.infDist b K > 0` forces `b ∉ K` when `K` is closed).",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_lem_local_pole_moving.lean"
 }
