@@ -213,7 +213,6 @@ lemma far_pole_polynomial_approx
         rw [div_div]
         congr 1
         field_simp
-        ring
       rw [hsum_eq]
       have hzbpow : (z / b) ^ N = z ^ N / b ^ N := div_pow z b N
       rw [hzbpow]
