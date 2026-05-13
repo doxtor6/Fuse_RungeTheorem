@@ -679,13 +679,11 @@ theorem single_pole_polynomial_approx
     γc ⟨(i : ℝ) / (m + 1), hti_mem i⟩ with hchain_def
   have hchain_notin : ∀ i, chain i ∉ K := by
     intro i hin
-    have : γc _ ∈ image := ⟨_, rfl⟩
-    have hd := himg_dist ⟨(i : ℝ) / (m + 1), _⟩
-    have hd0 : (0 : ℝ) < Metric.infDist (γc _) K := lt_of_lt_of_le hρ_pos hd
-    have hKclosed : IsClosed K := hK.isClosed
-    have : Metric.infDist (γc _) K = 0 := by
-      have : γc _ ∈ K := hin
-      exact Metric.infDist_zero_of_mem this
+    set ti : unitInterval := ⟨(i : ℝ) / (m + 1), hti_mem i⟩ with hti_def
+    have hd : ρ ≤ Metric.infDist (γc ti) K := himg_dist ti
+    have hd0 : (0 : ℝ) < Metric.infDist (γc ti) K := lt_of_lt_of_le hρ_pos hd
+    have hin' : γc ti ∈ K := hin
+    have heq : Metric.infDist (γc ti) K = 0 := Metric.infDist_zero_of_mem hin'
     linarith
   have hchain_step : ∀ i : Fin (m + 1),
       ‖chain i.castSucc - chain i.succ‖ < Metric.infDist (chain i.succ) K := by
@@ -716,33 +714,32 @@ theorem single_pole_polynomial_approx
   -- Apply pole_move_polynomial_chain with P = X, ε/2.
   -- Need: chain 0 = a, chain (Fin.last (m+1)) = b.
   have hchain_zero : chain 0 = a := by
-    show γc ⟨(0 : ℝ) / (m + 1), _⟩ = a
-    have hzero : ((0 : Fin (m + 2)) : ℝ) / (m + 1) = 0 := by simp
-    have h0 : (⟨(0 : ℝ) / (m + 1), _⟩ : unitInterval) = (0 : unitInterval) := by
+    show γc ⟨((0 : Fin (m + 2)) : ℝ) / (m + 1), _⟩ = a
+    have h0 : (⟨((0 : Fin (m + 2)) : ℝ) / (m + 1), hti_mem 0⟩ : unitInterval)
+        = (0 : unitInterval) := by
       apply Subtype.ext
+      show ((0 : Fin (m + 2)) : ℝ) / (m + 1) = 0
       simp
     rw [h0]
-    show ((γ 0 : (Kᶜ : Set ℂ))).val = a
+    show (γ (0 : unitInterval)).val = a
     rw [γ.source]
   have hchain_last : chain (Fin.last (m + 1)) = b := by
-    show γc ⟨((m + 1 : ℕ) : ℝ) / (m + 1), _⟩ = b
-    have hone : (⟨((m + 1 : ℕ) : ℝ) / (m + 1), _⟩ : unitInterval) = (1 : unitInterval) := by
+    show γc ⟨((Fin.last (m + 1) : Fin (m + 2)) : ℝ) / (m + 1), _⟩ = b
+    have h1 : (⟨((Fin.last (m + 1) : Fin (m + 2)) : ℝ) / (m + 1),
+        hti_mem (Fin.last (m + 1))⟩ : unitInterval) = (1 : unitInterval) := by
       apply Subtype.ext
-      show ((m + 1 : ℕ) : ℝ) / (m + 1) = 1
-      have hmpos : (0 : ℝ) < m + 1 := by positivity
-      have : ((m + 1 : ℕ) : ℝ) = m + 1 := by push_cast; ring
-      rw [this]; field_simp
-    have hcast : (Fin.last (m + 1) : Fin (m + 2)) = ⟨m + 1, by omega⟩ := rfl
-    rw [hcast]
-    have : (((⟨m + 1, by omega⟩ : Fin (m + 2)) : ℕ) : ℝ) = ((m + 1 : ℕ) : ℝ) := by
-      simp
-    show γc ⟨(((⟨m + 1, by omega⟩ : Fin (m + 2)) : ℕ) : ℝ) / (m + 1), _⟩ = b
-    rw [show (⟨(((⟨m + 1, by omega⟩ : Fin (m + 2)) : ℕ) : ℝ) / (m + 1), _⟩ : unitInterval) = (1 : unitInterval) from by
-      apply Subtype.ext; show _ = (1 : ℝ); rw [this]
-      have hmpos : (0 : ℝ) < m + 1 := by positivity
-      have hh : ((m + 1 : ℕ) : ℝ) = m + 1 := by push_cast; ring
-      rw [hh]; field_simp]
-    show ((γ 1 : (Kᶜ : Set ℂ))).val = b
+      show ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) / (m + 1) = 1
+      have hval : ((Fin.last (m + 1) : Fin (m + 2)) : ℕ) = m + 1 := Fin.val_last (m + 1)
+      have hcast : ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) = ((m + 1 : ℕ) : ℝ) := by
+        rw [show ((Fin.last (m + 1) : Fin (m + 2)) : ℝ) =
+          ((((Fin.last (m + 1) : Fin (m + 2)) : ℕ) : ℝ)) from rfl, hval]
+      rw [hcast]
+      have hmpos : ((m + 1 : ℕ) : ℝ) ≠ 0 := by
+        have : (0 : ℝ) < m + 1 := by positivity
+        push_cast; linarith
+      field_simp
+    rw [h1]
+    show (γ (1 : unitInterval)).val = b
     rw [γ.target]
   obtain ⟨Q, hQ⟩ := pole_move_polynomial_chain hK (m + 1) chain hchain_notin hchain_step
     Polynomial.X (ε / 2) (by linarith)
