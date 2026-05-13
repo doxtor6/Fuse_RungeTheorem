@@ -270,22 +270,21 @@ private lemma rectangle_cauchy_with_pole
         · exact differentiableAt_id.sub_const z
         · exact sub_ne_zero.mpr hwne
       · exact (hf.differentiableAt (hU.mem_nhds hwU)).sub_const (f z)
-    exact h_evEq.congr_differentiableAt.mp hg_diff_at_w
+    exact h_evEq.differentiableAt_iff.mp hg_diff_at_w
+  -- Parametrisation map is continuous as a function ℝ → ℂ.
+  have hparam_cont : ∀ (a b : ℂ), Continuous (fun t : ℝ => a + (t : ℂ) * (b - a)) := by
+    intro a b
+    exact continuous_const.add ((Complex.continuous_ofReal).mul continuous_const)
   -- Continuity of dslope f z composed with each segment parametrisation.
   have hdslope_cont_seg : ∀ (a b : ℂ), (∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∈ U) →
-      ContinuousOn (fun t : ℝ => dslope f z (a + (t : ℂ) * (b - a))) (Set.Icc (0:ℝ) 1) := by
-    intro a b h_in_U
-    have hcontmap : ContinuousOn (fun t : ℝ => a + (t : ℂ) * (b - a)) (Set.Icc (0:ℝ) 1) := by
-      apply Continuous.continuousOn
-      continuity
-    exact hdslope_cont.comp hcontmap h_in_U
+      ContinuousOn (fun t : ℝ => dslope f z (a + (t : ℂ) * (b - a))) (Set.Icc (0:ℝ) 1) :=
+    fun a b h_in_U => hdslope_cont.comp (hparam_cont a b).continuousOn h_in_U
   -- Continuity of 1/(ζ - z) composed with each segment parametrisation.
   have hinv_cont_seg : ∀ (a b : ℂ), (∀ t : ℝ, a + (t : ℂ) * (b - a) ≠ z) →
       ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) (Set.Icc (0:ℝ) 1) := by
     intro a b h_avoid
     apply ContinuousOn.div continuousOn_const
-    · apply Continuous.continuousOn
-      continuity
+    · exact ((hparam_cont a b).sub continuous_const).continuousOn
     · intro t _
       exact sub_ne_zero.mpr (h_avoid t)
   -- Helper: linearity of segment integral when we split into dslope + f(z)·1/(ζ-z).
