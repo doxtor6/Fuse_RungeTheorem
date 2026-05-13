@@ -371,6 +371,149 @@ lemma far_pole_polynomial_approx
     intro z hz
     exact absurd ⟨z, hz⟩ hKne
 
+section SinglePolePolynomial
+
+/--
+Step lemma: moving a polynomial in `1/(z-a)` to a polynomial in `1/(z-b)`.
+
+If `a, b ∉ K` and `‖a-b‖ < infDist b K`, then for any polynomial `P` and `ε > 0`,
+there exists a polynomial `Q` such that for all `z ∈ K`,
+`‖P.eval (1/(z-a)) - Q.eval (1/(z-b))‖ < ε`.
+-/
+private lemma pole_move_polynomial_step
+    {K : Set ℂ} (hK : IsCompact K)
+    {a b : ℂ} (ha : a ∉ K) (hb : b ∉ K)
+    (hab : ‖a - b‖ < Metric.infDist b K) (P : Polynomial ℂ) :
+    ∀ ε > 0, ∃ Q : Polynomial ℂ,
+      ∀ z ∈ K, ‖P.eval (1 / (z - a)) - Q.eval (1 / (z - b))‖ < ε := by
+  intro ε hε
+  by_cases hKemp : K = ∅
+  · refine ⟨0, ?_⟩
+    intro z hz; rw [hKemp] at hz; exact absurd hz (Set.notMem_empty z)
+  have hKne : K.Nonempty := Set.nonempty_iff_ne_empty.mpr hKemp
+  set d : ℝ := Metric.infDist b K with hd_def
+  set r : ℝ := ‖a - b‖ with hr_def
+  have hKclosed : IsClosed K := hK.isClosed
+  have hd_pos : 0 < d := (hKclosed.notMem_iff_infDist_pos hKne).mp hb
+  have hr_nonneg : 0 ≤ r := norm_nonneg _
+  have hr_lt_d : r < d := hab
+  have hd_minus_r_pos : 0 < d - r := sub_pos.mpr hr_lt_d
+  have hzb_ge : ∀ z ∈ K, d ≤ ‖z - b‖ := by
+    intro z hz
+    have h := Metric.infDist_le_dist_of_mem hz (x := b)
+    have heq : dist b z = ‖z - b‖ := by
+      rw [Complex.dist_eq, ← norm_neg]; congr 1; ring
+    rw [heq] at h; exact h
+  have hza_ge : ∀ z ∈ K, d - r ≤ ‖z - a‖ := by
+    intro z hz
+    have h1 : d ≤ ‖z - b‖ := hzb_ge z hz
+    have h2 : ‖z - b‖ ≤ ‖z - a‖ + ‖a - b‖ := by
+      have := norm_add_le (z - a) (a - b)
+      have heq : (z - a) + (a - b) = z - b := by ring
+      rw [heq] at this; exact this
+    linarith
+  have hzb_ne : ∀ z ∈ K, z - b ≠ 0 := by
+    intro z hz hzbeq
+    have : ‖z - b‖ = 0 := by rw [hzbeq]; simp
+    have h1 := hzb_ge z hz; linarith
+  have hza_ne : ∀ z ∈ K, z - a ≠ 0 := by
+    intro z hz hzaeq
+    have : ‖z - a‖ = 0 := by rw [hzaeq]; simp
+    have h1 := hza_ge z hz; linarith
+  -- Uniform bound for both 1/(z-a) and approximations on K.
+  set M : ℝ := 1 / (d - r) + 1 with hM_def
+  have hM_pos : 0 < M := by
+    have h1 : 0 < 1 / (d - r) := by positivity
+    linarith
+  have hM_nonneg : 0 ≤ M := hM_pos.le
+  -- Use uniform continuity of P.eval on closed ball of radius M.
+  have hPcont : ContinuousOn (fun w : ℂ => P.eval w) (Metric.closedBall (0 : ℂ) M) :=
+    P.continuous.continuousOn
+  have hPcomp : IsCompact (Metric.closedBall (0 : ℂ) M) := isCompact_closedBall _ _
+  have hPucon : UniformContinuousOn (fun w : ℂ => P.eval w) (Metric.closedBall (0 : ℂ) M) :=
+    hPcomp.uniformContinuousOn_of_continuous hPcont
+  rw [Metric.uniformContinuousOn_iff] at hPucon
+  obtain ⟨η, hη_pos, hη⟩ := hPucon ε hε
+  -- Pick η' = min(η, 1) so that the approximation is within η and stays in ball M.
+  set η' : ℝ := min η 1 with hη'_def
+  have hη'_pos : 0 < η' := lt_min hη_pos one_pos
+  have hη'_le_η : η' ≤ η := min_le_left _ _
+  have hη'_le_one : η' ≤ 1 := min_le_right _ _
+  -- Apply local_pole_moving with ε = η'.
+  obtain ⟨N, hN⟩ := local_pole_moving hK ha hb hab η' hη'_pos
+  -- Build the approximating polynomial in 1/(z-b).
+  -- The partial sum is ∑_{n=0}^N (a-b)^n / (z-b)^(n+1)
+  --                  = (1/(z-b)) * ∑_{n=0}^N (a-b)^n (1/(z-b))^n
+  -- So the polynomial R(w) := ∑_{n=0}^N (a-b)^n * w^(n+1) satisfies R.eval(1/(z-b)) = partial sum.
+  set R : Polynomial ℂ := ∑ n ∈ Finset.range (N + 1),
+    Polynomial.C ((a - b) ^ n) * Polynomial.X ^ (n + 1) with hR_def
+  have hR_eval : ∀ z : ℂ, z ≠ b → R.eval (1 / (z - b)) =
+      ∑ n ∈ Finset.range (N + 1), (a - b) ^ n / (z - b) ^ (n + 1) := by
+    intro z hzne
+    have hzbne : z - b ≠ 0 := sub_ne_zero.mpr hzne
+    rw [hR_def, Polynomial.eval_finset_sum]
+    apply Finset.sum_congr rfl
+    intro n _
+    rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow, Polynomial.eval_X]
+    rw [one_div, inv_pow, pow_succ, mul_inv, ← mul_assoc, ← one_div, ← one_div, ← div_eq_mul_inv,
+        ← div_eq_mul_inv, mul_comm]
+    field_simp
+  -- Choose Q := P.comp R, so Q.eval (1/(z-b)) = P.eval (R.eval (1/(z-b))) = P.eval (partial sum).
+  refine ⟨P.comp R, ?_⟩
+  intro z hz
+  have hzbne : z ≠ b := by
+    intro hzeq
+    have : z - b = 0 := by rw [hzeq]; ring
+    exact (hzb_ne z hz) this
+  have hane : z - a ≠ 0 := hza_ne z hz
+  -- partial sum approximates 1/(z-a) within η'.
+  have hpartial := hN z hz
+  -- ‖1/(z-a)‖ ≤ 1/(d-r) < M.
+  have hinvza_norm : ‖(1 / (z - a) : ℂ)‖ ≤ 1 / (d - r) := by
+    rw [norm_div, norm_one]
+    rw [div_le_div_iff (by positivity) hd_minus_r_pos]
+    have := hza_ge z hz
+    have h_za_pos : 0 < ‖z - a‖ := lt_of_lt_of_le hd_minus_r_pos this
+    rw [one_mul]
+    have := hza_ge z hz; linarith
+  have hinvza_lt_M : ‖(1 / (z - a) : ℂ)‖ < M := by
+    have : 1 / (d - r) < M := by rw [hM_def]; linarith
+    linarith [hinvza_norm]
+  have hinvza_mem : (1 / (z - a) : ℂ) ∈ Metric.closedBall (0 : ℂ) M := by
+    rw [Metric.mem_closedBall, dist_zero_right]
+    exact hinvza_norm.trans (by rw [hM_def]; linarith)
+  -- ‖partial sum‖ ≤ ‖1/(z-a)‖ + η' ≤ 1/(d-r) + 1 = M
+  set S : ℂ := ∑ n ∈ Finset.range (N + 1), (a - b) ^ n / (z - b) ^ (n + 1) with hS_def
+  have hS_close : ‖1 / (z - a) - S‖ < η' := hpartial
+  have hS_norm : ‖S‖ ≤ M := by
+    have h1 : ‖S‖ ≤ ‖1 / (z - a)‖ + ‖1 / (z - a) - S‖ := by
+      have := norm_sub_norm_le (1 / (z - a)) S
+      have h2 : ‖1 / (z - a) - S‖ = ‖S - 1 / (z - a)‖ := by rw [norm_sub_rev]
+      linarith [norm_sub_le (1 / (z - a) : ℂ) S, this]
+    have h2 : ‖1 / (z - a)‖ + ‖1 / (z - a) - S‖ ≤ 1 / (d - r) + 1 := by
+      have := hS_close
+      linarith [hinvza_norm, hη'_le_one]
+    rw [hM_def]; linarith
+  have hS_mem : S ∈ Metric.closedBall (0 : ℂ) M := by
+    rw [Metric.mem_closedBall, dist_zero_right]; exact hS_norm
+  -- Now ‖P(1/(z-a)) - P(S)‖ < ε.
+  have hdist : dist (1 / (z - a) : ℂ) S < η := by
+    rw [dist_eq_norm]
+    have := hS_close
+    linarith [hη'_le_η]
+  have hP_close : ‖P.eval (1 / (z - a)) - P.eval S‖ < ε := by
+    have := hη (1 / (z - a)) hinvza_mem S hS_mem hdist
+    rwa [dist_eq_norm] at this
+  -- Q.eval(1/(z-b)) = P.eval(R.eval(1/(z-b))) = P.eval(S).
+  have hQeval : (P.comp R).eval (1 / (z - b)) = P.eval S := by
+    rw [Polynomial.eval_comp]
+    congr 1
+    exact hR_eval z hzbne
+  rw [hQeval]
+  exact hP_close
+
+end SinglePolePolynomial
+
 /--
 Single pole is polynomially approximable.
 
