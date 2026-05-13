@@ -12,5 +12,6 @@
   "leanDeclaration": "single_pole_polynomial_approx",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "HARD",
-  "notes": "Signature: `theorem single_pole_polynomial_approx {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ)) {a : ℂ} (ha : a ∉ K) : ∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - 1 / (z - a)‖ < ε`. Lean `theorem` keyword used (no `proposition`). Connected-complement hypothesis matches `MainTheorem` spelling `IsConnected (Kᶜ)`."
+  "notes": "Signature: `theorem single_pole_polynomial_approx {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ)) {a : ℂ} (ha : a ∉ K) : ∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - 1 / (z - a)‖ < ε`. Lean `theorem` keyword used (no `proposition`). Connected-complement hypothesis matches `MainTheorem` spelling `IsConnected (Kᶜ)`.",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_prop_single_pole_polynomial.lean"
 }
