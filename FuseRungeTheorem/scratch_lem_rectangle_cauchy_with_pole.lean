@@ -205,15 +205,14 @@ private lemma rectangle_cauchy_with_pole
   have hBC_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, B + (t : ℂ) * (C - B) ∈ U := by
     intro t ht
     apply hrect_sub_U
-    · have : (B + (t : ℂ) * (C - B)).re = x₀ + s := by
+    · have hre_eq : (B + (t : ℂ) * (C - B)).re = x₀ + s := by
         simp [hB, hC, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
-              Complex.ofReal_im, Complex.mul_im, Complex.sub_im]
-      rw [this]
+              Complex.ofReal_im]
+      rw [hre_eq]
       exact ⟨by linarith, le_refl _⟩
-    · have : (B + (t : ℂ) * (C - B)).im = y₀ + t * s := by
+    · have him_eq : (B + (t : ℂ) * (C - B)).im = y₀ + t * s := by
         simp [hB, hC, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
-        ring
-      rw [this]
+      rw [him_eq]
       refine ⟨?_, ?_⟩
       · linarith [mul_nonneg ht.1 hs.le]
       · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
@@ -221,31 +220,31 @@ private lemma rectangle_cauchy_with_pole
   have hCD_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, C + (t : ℂ) * (D - C) ∈ U := by
     intro t ht
     apply hrect_sub_U
-    · have : (C + (t : ℂ) * (D - C)).re = (x₀ + s) - t * s := by
+    · have hre_eq : (C + (t : ℂ) * (D - C)).re = (x₀ + s) - t * s := by
         simp [hC, hD, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
-              Complex.ofReal_im, Complex.mul_im, Complex.sub_im]
+              Complex.ofReal_im]
         ring
-      rw [this]
+      rw [hre_eq]
       refine ⟨?_, ?_⟩
       · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
         linarith
       · linarith [mul_nonneg ht.1 hs.le]
-    · have : (C + (t : ℂ) * (D - C)).im = y₀ + s := by
+    · have him_eq : (C + (t : ℂ) * (D - C)).im = y₀ + s := by
         simp [hC, hD, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
-      rw [this]
+      rw [him_eq]
       exact ⟨by linarith, le_refl _⟩
   have hDA_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, D + (t : ℂ) * (A - D) ∈ U := by
     intro t ht
     apply hrect_sub_U
-    · have : (D + (t : ℂ) * (A - D)).re = x₀ := by
+    · have hre_eq : (D + (t : ℂ) * (A - D)).re = x₀ := by
         simp [hD, hA, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
-              Complex.ofReal_im, Complex.mul_im, Complex.sub_im]
-      rw [this]
+              Complex.ofReal_im]
+      rw [hre_eq]
       exact ⟨le_refl _, by linarith⟩
-    · have : (D + (t : ℂ) * (A - D)).im = (y₀ + s) - t * s := by
+    · have him_eq : (D + (t : ℂ) * (A - D)).im = (y₀ + s) - t * s := by
         simp [hD, hA, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
         ring
-      rw [this]
+      rw [him_eq]
       refine ⟨?_, ?_⟩
       · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
         linarith
