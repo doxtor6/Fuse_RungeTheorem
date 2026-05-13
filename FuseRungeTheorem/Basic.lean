@@ -154,9 +154,7 @@ lemma cauchy_integral_approximated_by_pole_sum
           rw [hδ_def]
           have hm1_pos : (0 : ℝ) < (m : ℝ) + 1 := by positivity
           rw [mul_div_assoc', div_lt_iff₀ hm1_pos]
-          have hlt : (m : ℝ) * ε < ((m : ℝ) + 1) * ε :=
-            (mul_lt_mul_right hε).mpr (by linarith)
-          linarith
+          nlinarith [hε, Nat.cast_nonneg m]
 
 /--
 Rational approximation with poles off `K`.
