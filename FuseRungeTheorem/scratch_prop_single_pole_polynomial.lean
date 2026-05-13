@@ -574,9 +574,7 @@ private lemma pole_move_polynomial_chain
     have hchain'_0 : chain' 0 = b₀ := rfl
     have hchain'_last : chain' (Fin.last m) = chain (Fin.last (m + 1)) := by
       show chain (Fin.succ (Fin.last m)) = chain (Fin.last (m + 1))
-      congr 1
-      ext
-      simp
+      rfl
     have hQ_z := hQ z hz
     rw [hchain'_0, hchain'_last] at hQ_z
     have hP'_z := hP' z hz
