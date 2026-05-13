@@ -3,11 +3,12 @@
   "kind": "lemma",
   "title": "Compact subset of an open set has a positive collar",
   "uses": [],
-  "statement": "Let \\(K,U \\subset \\C\\). If \\(K\\) is compact, \\(U\\) is open, and \\(K \\subset U\\),\n    then there exists \\(\\rho > 0\\) such that\n    \\[\n      \\{z \\in \\C : \\dist(z,K) < \\rho\\} \\subset U .\n    \\]",
+  "statement": "Let \\(K,U \\subset \\C\\). If \\(K\\) is compact, \\(U\\) is open, and \\(K \\subset U\\),\n    then there exists \\(\\rho > 0\\) such that the open \\(\\rho\\)-thickening of\n    \\(K\\) is contained in \\(U\\):\n    \\[\n      \\mathrm{thickening}(\\rho, K) \\subset U .\n    \\]\n    For nonempty \\(K\\) this thickening agrees with\n    \\(\\{z \\in \\C : \\dist(z,K) < \\rho\\}\\); the formulation via\n    \\texttt{Metric.thickening} is preferred because it also handles the empty\n    case correctly (where \\texttt{Metric.thickening}\\(\\,\\rho\\,\\emptyset = \\emptyset\\)).",
   "proof": "Since \\(K\\) is compact and \\(U^c\\) is closed, and since \\(K \\cap U^c=\\varnothing\\),\n    the distance between \\(K\\) and \\(U^c\\) is positive. Choose \\(\\rho\\) smaller than\n    this distance. (In Mathlib this is essentially\n    \\texttt{IsCompact.exists\\_thickening\\_subset\\_open}.)",
   "leanDeclaration": "compact_subset_open_has_thickening",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "EASY",
-  "notes": "Signature: `lemma compact_subset_open_has_thickening {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) : ∃ ρ > 0, {z : ℂ | Metric.infDist z K < ρ} ⊆ U`. Uses `Metric.infDist` to phrase the collar. Provable from Mathlib's `IsCompact.exists_thickening_subset_open` (which gives the same conclusion as `Metric.thickening ρ K ⊆ U`).",
-  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/Scratch_compact_subset_open_has_thickening.lean"
+  "notes": "Signature: `lemma compact_subset_open_has_thickening {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) : ∃ ρ > 0, Metric.thickening ρ K ⊆ U`. Originally formulated with `{z : ℂ | Metric.infDist z K < ρ} ⊆ U`, but that form is false in the corner case K = U = ∅ (since `Metric.infDist _ ∅ = 0`). Reformulated using `Metric.thickening` (which uses `infEDist`, equal to ∞ on ∅, so `Metric.thickening ρ ∅ = ∅`). For nonempty K the two formulations are equivalent. Direct one-liner from `IsCompact.exists_thickening_subset_open`.",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/Scratch_compact_subset_open_has_thickening.lean",
+  "status": "proved"
 }

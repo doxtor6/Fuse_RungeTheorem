@@ -10,8 +10,8 @@ the open `ρ`-thickening of `K` is contained in `U`.
 -/
 lemma compact_subset_open_has_thickening {K U : Set ℂ}
     (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) :
-    ∃ ρ > 0, {z : ℂ | Metric.infDist z K < ρ} ⊆ U := by
-  sorry
+    ∃ ρ > 0, Metric.thickening ρ K ⊆ U :=
+  hK.exists_thickening_subset_open hU hKU
 
 /--
 Cauchy integral approximation by finite pole sums.

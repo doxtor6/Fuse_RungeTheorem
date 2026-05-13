@@ -62,11 +62,18 @@
 \begin{lemma}[Compact subset of an open set has a positive collar]
     \label{lem:compact_subset_open_collar}
     \lean{compact_subset_open_has_thickening}
+    \leanfile{FuseRungeTheorem/Basic.lean}
+    \leanok
     Let \(K,U \subset \C\). If \(K\) is compact, \(U\) is open, and \(K \subset U\),
-    then there exists \(\rho > 0\) such that
+    then there exists \(\rho > 0\) such that the open \(\rho\)-thickening of
+    \(K\) is contained in \(U\):
     \[
-      \{z \in \C : \dist(z,K) < \rho\} \subset U .
+      \mathrm{thickening}(\rho, K) \subset U .
     \]
+    For nonempty \(K\) this thickening agrees with
+    \(\{z \in \C : \dist(z,K) < \rho\}\); the formulation via
+    \texttt{Metric.thickening} is preferred because it also handles the empty
+    case correctly (where \texttt{Metric.thickening}\(\,\rho\,\emptyset = \emptyset\)).
 \end{lemma}
 
 \begin{proof}
@@ -150,6 +157,8 @@
 \begin{lemma}[The complement of a compact set is unbounded]
     \label{lem:compact_complement_unbounded}
     \lean{compact_complement_unbounded}
+    \leanfile{FuseRungeTheorem/Basic.lean}
+    \leanok
     Let \(K \subset \C\) be compact. Then for every \(R > 0\), there exists
     \(b \in \C \setminus K\) such that \(|b| > R\).
 \end{lemma}
@@ -162,6 +171,8 @@
 \begin{lemma}[Connected open subsets of \(\C\) are path-connected]
     \label{lem:connected_open_path_connected}
     \lean{isConnected_isOpen_pathConnected_complex}
+    \leanfile{FuseRungeTheorem/Basic.lean}
+    \leanok
     Let \(V \subset \C\). If \(V\) is open and connected, then \(V\) is
     path-connected.
 \end{lemma}

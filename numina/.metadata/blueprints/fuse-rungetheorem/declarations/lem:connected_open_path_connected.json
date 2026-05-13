@@ -9,5 +9,6 @@
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "EASY",
   "notes": "Signature: `lemma isConnected_isOpen_pathConnected_complex {V : Set ℂ} (hV : IsOpen V) (hC : IsConnected V) : IsPathConnected V`. Direct application of `IsOpen.isConnected_iff_isPathConnected` (ℂ is `LocPathConnectedSpace` via its `ℝ^n` structure).",
-  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/Scratch_isConnected_isOpen_pathConnected_complex.lean"
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/Scratch_isConnected_isOpen_pathConnected_complex.lean",
+  "status": "proved"
 }
