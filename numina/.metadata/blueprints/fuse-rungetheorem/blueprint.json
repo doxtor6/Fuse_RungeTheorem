@@ -15,6 +15,16 @@
       "title": "Compact subset of an open set has a positive collar"
     },
     {
+      "label": "lem:cauchy_grid_representation",
+      "kind": "lemma",
+      "title": "Grid-contour Cauchy representation"
+    },
+    {
+      "label": "lem:segment_pole_sum_uniform_approx",
+      "kind": "lemma",
+      "title": "Uniform Riemann-sum pole approximation on a segment"
+    },
+    {
       "label": "lem:cauchy_integral_to_pole_sum",
       "kind": "lemma",
       "title": "Cauchy integral approximation by finite pole sums"

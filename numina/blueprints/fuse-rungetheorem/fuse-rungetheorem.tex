@@ -83,10 +83,74 @@
     \texttt{IsCompact.exists\_thickening\_subset\_open}.)
 \end{proof}
 
+\begin{lemma}[Grid-contour Cauchy representation]
+    \label{lem:cauchy_grid_representation}
+    \lean{cauchy_grid_representation}
+    \leanfile{FuseRungeTheorem/Basic.lean}
+    \uses{lem:compact_subset_open_collar}
+    Let \(K \subset U \subset \C\), with \(K\) compact and \(U\) open, and let
+    \(f : \C \to \C\) be holomorphic on \(U\). Then there exists a finite oriented
+    piecewise-linear contour \(\Gamma \subset U \setminus K\), encoded as a finite
+    sequence of oriented line segments \([A_i, B_i]\) whose images lie in
+    \(U \setminus K\), such that Cauchy's integral formula
+    \[
+      f(z) = \frac{1}{2\pi i}\sum_{i} \int_{A_i \to B_i}
+        \frac{f(\zeta)}{\zeta-z}\,d\zeta
+    \]
+    holds for every \(z \in K\).
+\end{lemma}
+
+\begin{proof}
+    \uses{lem:compact_subset_open_collar}
+    By \cref{lem:compact_subset_open_collar}, fix a positive collar \(\rho>0\)
+    such that the \(2\rho\)-thickening of \(K\) lies in \(U\). Cover \(K\) by a
+    finite grid of axis-parallel closed squares of side \(h\) with
+    \(h\sqrt 2 < \rho\); the chosen squares have closures inside \(U\). Form
+    \(\Gamma\) as the algebraic boundary of the union of these squares, with
+    interior edges cancelling because each appears in two adjacent squares with
+    opposite orientation. Each remaining oriented edge lies in the
+    \(\rho\)-thickening but outside \(K\), so \(\Gamma \subset U \setminus K\).
+    For \(z \in K\), Cauchy's integral formula on \(\Gamma\) follows by
+    deforming a small circle around \(z\) to the outer grid boundary via
+    Cauchy-Goursat applied piecewise on the interior squares.
+\end{proof}
+
+\begin{lemma}[Uniform Riemann-sum pole approximation on a segment]
+    \label{lem:segment_pole_sum_uniform_approx}
+    \lean{segment_pole_sum_uniform_approx}
+    \leanfile{FuseRungeTheorem/Basic.lean}
+    Let \(K \subset \C\) be compact. Let \([a, b] \subset \C\) be an oriented
+    line segment whose image is disjoint from \(K\), and let \(g : \C \to \C\)
+    be continuous on the segment image. Then for every \(\eps > 0\) there exist
+    finitely many sample points \(a_j\) on the segment and coefficients \(c_j\)
+    such that
+    \[
+      \forall z \in K,\qquad
+      \left|
+        \sum_{j} \frac{c_j}{z - a_j}
+        -
+        \frac{1}{2\pi i}\int_{a \to b} \frac{g(\zeta)}{\zeta - z}\,d\zeta
+      \right| < \eps .
+    \]
+\end{lemma}
+
+\begin{proof}
+    The kernel \((\zeta, z) \mapsto g(\zeta)/(\zeta - z)\) is continuous on the
+    compact product \(\mathrm{image}([a,b]) \times K\) (the segment image is
+    compact and disjoint from \(K\), so the denominator is bounded away from
+    zero). Hence it is uniformly continuous, and Riemann sums of the parametric
+    integral over a sufficiently fine partition of the unit interval converge
+    uniformly in \(z \in K\). Reading off the linear parametrisation
+    \(\gamma(t) = a + t(b - a)\) yields sample points on the segment and
+    coefficients giving the pole-sum form (after the sign flip
+    \(\zeta - z = -(z - \zeta)\) is absorbed into the coefficients).
+\end{proof}
+
 \begin{lemma}[Cauchy integral approximation by finite pole sums]
     \label{lem:cauchy_integral_to_pole_sum}
     \lean{cauchy_integral_approximated_by_pole_sum}
-    \uses{lem:compact_subset_open_collar}
+    \leanfile{FuseRungeTheorem/Basic.lean}
+    \uses{lem:cauchy_grid_representation, lem:segment_pole_sum_uniform_approx}
     Let \(K \subset U \subset \C\), with \(K\) compact and \(U\) open. Let
     \(f : \C \to \C\) be holomorphic on \(U\). Then for every \(\eps > 0\), there
     exist finitely many points \(a_1,\dots,a_N \in \C \setminus K\) and coefficients
@@ -100,35 +164,22 @@
 \end{lemma}
 
 \begin{proof}
-    \uses{lem:compact_subset_open_collar}
-    Using \cref{lem:compact_subset_open_collar}, choose a small neighbourhood of
-    \(K\) whose closure is contained in \(U\). Cover \(K\) by finitely many small
-    closed squares whose union is contained in this neighbourhood. Let \(\Gamma\)
-    be the positively oriented boundary of the union of these squares, after
-    cancelling internal edges.
-
-    For \(z \in K\), Cauchy's integral formula gives
+    \uses{lem:cauchy_grid_representation, lem:segment_pole_sum_uniform_approx}
+    \leanok
+    By \cref{lem:cauchy_grid_representation}, fix a finite oriented contour
+    \(\Gamma = \bigcup_i [A_i, B_i] \subset U \setminus K\) such that
     \[
       f(z)
-      =
-      \frac{1}{2\pi i}
-      \int_\Gamma \frac{f(\zeta)}{\zeta-z}\,d\zeta .
+      = \frac{1}{2\pi i}\sum_i \int_{A_i \to B_i}
+        \frac{f(\zeta)}{\zeta-z}\,d\zeta
     \]
-    The curve \(\Gamma\) is compact and disjoint from \(K\), so the kernel
-    \[
-      (\zeta,z) \mapsto \frac{f(\zeta)}{\zeta-z}
-    \]
-    is uniformly continuous on \(\Gamma \times K\). Therefore the above contour
-    integral can be uniformly approximated, for \(z \in K\), by Riemann sums of the
-    form
-    \[
-      \sum_{j=1}^N \frac{c_j}{a_j-z}.
-    \]
-    Changing signs in the coefficients gives the desired form
-    \[
-      \sum_{j=1}^N \frac{c_j}{z-a_j}.
-    \]
-    Each pole \(a_j\) lies on \(\Gamma\), hence outside \(K\).
+    for every \(z \in K\). Given \(\eps > 0\), apply
+    \cref{lem:segment_pole_sum_uniform_approx} to each segment \([A_i, B_i]\)
+    with target error \(\eps/(m+1)\), where \(m\) is the number of segments,
+    obtaining finitely many poles on the segment and coefficients whose pole
+    sum approximates the per-segment contour integral. Concatenating across
+    segments and applying the triangle inequality yields the desired total
+    approximation.
 \end{proof}
 
 \begin{proposition}[Rational approximation with poles off \(K\)]

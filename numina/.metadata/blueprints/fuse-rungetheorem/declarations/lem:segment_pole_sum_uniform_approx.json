@@ -1,0 +1,10 @@
+{
+  "label": "lem:segment_pole_sum_uniform_approx",
+  "kind": "lemma",
+  "title": "Uniform Riemann-sum pole approximation on a segment",
+  "uses": [],
+  "statement": "Let \\(K \\subset \\C\\) be compact. Let \\([a, b] \\subset \\C\\) be an oriented\n    line segment whose image is disjoint from \\(K\\), and let \\(g : \\C \\to \\C\\)\n    be continuous on the segment image. Then for every \\(\\eps > 0\\) there exist\n    finitely many sample points \\(a_j\\) on the segment and coefficients \\(c_j\\)\n    such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|\n        \\sum_{j} \\frac{c_j}{z - a_j}\n        -\n        \\frac{1}{2\\pi i}\\int_{a \\to b} \\frac{g(\\zeta)}{\\zeta - z}\\,d\\zeta\n      \\right| < \\eps .\n    \\]",
+  "proof": "The kernel \\((\\zeta, z) \\mapsto g(\\zeta)/(\\zeta - z)\\) is continuous on the\n    compact product \\(\\mathrm{image}([a,b]) \\times K\\) (the segment image is\n    compact and disjoint from \\(K\\), so the denominator is bounded away from\n    zero). Hence it is uniformly continuous, and Riemann sums of the parametric\n    integral over a sufficiently fine partition of the unit interval converge\n    uniformly in \\(z \\in K\\). Reading off the linear parametrisation\n    \\(\\gamma(t) = a + t(b - a)\\) yields sample points on the segment and\n    coefficients giving the pole-sum form (after the sign flip\n    \\(\\zeta - z = -(z - \\zeta)\\) is absorbed into the coefficients).",
+  "leanDeclaration": "segment_pole_sum_uniform_approx",
+  "leanFile": "FuseRungeTheorem/Basic.lean"
+}
