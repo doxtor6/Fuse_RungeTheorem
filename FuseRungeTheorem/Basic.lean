@@ -13,12 +13,73 @@ lemma compact_subset_open_has_thickening {K U : Set ℂ}
     ∃ ρ > 0, Metric.thickening ρ K ⊆ U :=
   hK.exists_thickening_subset_open hU hKU
 
+section CauchyIntegralApproximation
+
+/-- Contour integral along the oriented line segment from `a` to `b`,
+parametrised linearly by `t ∈ [0, 1]`. -/
+private noncomputable def segmentIntegral (a b : ℂ) (g : ℂ → ℂ) : ℂ :=
+  ∫ t in (0:ℝ)..1, g (a + (t : ℂ) * (b - a)) * (b - a)
+
+/--
+Grid-contour Cauchy representation (sub-lemma 1).
+
+For `K` compact in open `U` with `f` holomorphic on `U`, there is a finite
+oriented piecewise-linear contour `Γ ⊆ U \ K` (encoded as a `Fin m`-indexed
+family of oriented line segments with starts `A` and ends `B`) such that
+Cauchy's integral formula holds for every `z ∈ K`:
+`f(z) = (1 / (2πi)) · ∑ᵢ ∫_{Aᵢ → Bᵢ} f(ζ) / (ζ - z) dζ`.
+
+The contour is the algebraic (oriented) boundary of a finite cover of `K`
+by closed axis-parallel grid squares whose closures lie in `U`, with
+interior edges cancelling.
+-/
+private lemma cauchy_grid_representation
+    {K U : Set ℂ} {f : ℂ → ℂ}
+    (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U)
+    (hf : DifferentiableOn ℂ f U) :
+    ∃ (m : ℕ) (A B : Fin m → ℂ),
+      (∀ i, ∀ t ∈ Set.Icc (0:ℝ) 1, A i + (t : ℂ) * (B i - A i) ∈ U \ K) ∧
+      ∀ z ∈ K,
+        f z = (1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+          ∑ i, segmentIntegral (A i) (B i) (fun ζ => f ζ / (ζ - z)) := by
+  sorry
+
+/--
+Uniform parametric Riemann-sum approximation of a segment integral (sub-lemma 2).
+
+For an oriented segment whose image is disjoint from a compact set `K` and a
+function `g` continuous on that image, the parametric contour-integral functional
+`z ↦ (1/(2πi)) · ∫_{a → b} g(ζ)/(ζ - z) dζ` is uniformly approximated on `K` by
+finite pole-sums `∑ⱼ cⱼ/(z - aⱼ)` whose poles `aⱼ` lie on the segment image.
+-/
+private lemma segment_pole_sum_uniform_approx
+    {K : Set ℂ} (hK : IsCompact K) {a b : ℂ}
+    (h_seg_off_K : ∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∉ K)
+    {g : ℂ → ℂ}
+    (h_g_cont : ContinuousOn g
+      ((fun t : ℝ => a + (t : ℂ) * (b - a)) '' Set.Icc (0:ℝ) 1)) :
+    ∀ ε > 0, ∃ (N : ℕ) (sample : Fin N → ℂ) (coeff : Fin N → ℂ),
+      (∀ j, sample j ∉ K) ∧
+      ∀ z ∈ K,
+        ‖(∑ j, coeff j / (z - sample j))
+          - (1 / (2 * (Real.pi : ℂ) * Complex.I))
+            * segmentIntegral a b (fun ζ => g ζ / (ζ - z))‖ < ε := by
+  sorry
+
+end CauchyIntegralApproximation
+
 /--
 Cauchy integral approximation by finite pole sums.
 
 For `f` holomorphic on an open `U` containing a compact `K`, we can uniformly
 approximate `f` on `K` by a finite sum of simple poles whose pole locations lie
 outside `K`.
+
+Glue proof: obtain a finite oriented contour `Γ` from `cauchy_grid_representation`
+on which Cauchy's integral formula holds; per segment, apply
+`segment_pole_sum_uniform_approx` with budget `ε / (m + 1)`; flatten the
+(segment-index × sample-index) pairs into a single `Fin N` indexing; combine
+the per-segment estimates via the triangle inequality.
 -/
 lemma cauchy_integral_approximated_by_pole_sum
     {K U : Set ℂ} {f : ℂ → ℂ}
@@ -27,7 +88,74 @@ lemma cauchy_integral_approximated_by_pole_sum
     ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ),
       (∀ j, a j ∉ K) ∧
       ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε := by
-  sorry
+  intro ε hε
+  obtain ⟨m, A, B, hΓ, hCauchy⟩ :=
+    cauchy_grid_representation hK hU hKU hf
+  have hf_cont : ContinuousOn f U := hf.continuousOn
+  have h_seg_off_K : ∀ i : Fin m, ∀ t ∈ Set.Icc (0:ℝ) 1,
+      A i + (t : ℂ) * (B i - A i) ∉ K :=
+    fun i t ht => (hΓ i t ht).2
+  have h_seg_in_U : ∀ i : Fin m, ∀ t ∈ Set.Icc (0:ℝ) 1,
+      A i + (t : ℂ) * (B i - A i) ∈ U :=
+    fun i t ht => (hΓ i t ht).1
+  have h_f_cont_seg : ∀ i : Fin m, ContinuousOn f
+      ((fun t : ℝ => A i + (t : ℂ) * (B i - A i)) '' Set.Icc (0:ℝ) 1) := by
+    intro i
+    refine hf_cont.mono ?_
+    rintro w ⟨t, ht, rfl⟩
+    exact h_seg_in_U i t ht
+  set δ : ℝ := ε / (m + 1) with hδ_def
+  have hδ_pos : 0 < δ := by
+    refine div_pos hε ?_
+    positivity
+  choose N sample coeff hsample_off_K happrox using
+    fun i : Fin m =>
+      segment_pole_sum_uniform_approx hK (h_seg_off_K i) (h_f_cont_seg i) δ hδ_pos
+  classical
+  set pairType : Type := Σ i : Fin m, Fin (N i) with hpairType_def
+  set totalN : ℕ := Fintype.card pairType with htotalN_def
+  set φ : Fin totalN ≃ pairType := (Fintype.equivFin pairType).symm with hφ_def
+  refine ⟨totalN,
+          fun k => sample (φ k).1 (φ k).2,
+          fun k => coeff (φ k).1 (φ k).2,
+          ?_, ?_⟩
+  · intro k
+    exact hsample_off_K (φ k).1 (φ k).2
+  · intro z hz
+    set c0 : ℂ := 1 / (2 * (Real.pi : ℂ) * Complex.I) with hc0_def
+    have h_reindex :
+        ∑ k : Fin totalN, coeff (φ k).1 (φ k).2 / (z - sample (φ k).1 (φ k).2)
+          = ∑ p : pairType, coeff p.1 p.2 / (z - sample p.1 p.2) := by
+      apply Finset.sum_equiv φ
+      · intro k; simp
+      · intro k _; rfl
+    rw [h_reindex]
+    rw [show (∑ p : pairType, coeff p.1 p.2 / (z - sample p.1 p.2))
+          = ∑ i : Fin m, ∑ j : Fin (N i), coeff i j / (z - sample i j) from by
+        rw [← Finset.sum_sigma]; rfl]
+    rw [hCauchy z hz, Finset.mul_sum, ← Finset.sum_sub_distrib]
+    calc ‖∑ i : Fin m,
+            ((∑ j : Fin (N i), coeff i j / (z - sample i j)) -
+              c0 * segmentIntegral (A i) (B i) (fun ζ => f ζ / (ζ - z)))‖
+        ≤ ∑ i : Fin m,
+            ‖(∑ j : Fin (N i), coeff i j / (z - sample i j)) -
+              c0 * segmentIntegral (A i) (B i) (fun ζ => f ζ / (ζ - z))‖ := by
+          exact norm_sum_le _ _
+      _ ≤ ∑ _i : Fin m, δ := by
+          refine Finset.sum_le_sum ?_
+          intro i _
+          exact (happrox i z hz).le
+      _ = (m : ℝ) * δ := by
+          simp [Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+                nsmul_eq_mul]
+      _ < ε := by
+          rw [hδ_def]
+          have hm1_pos : (0 : ℝ) < (m : ℝ) + 1 := by positivity
+          rw [mul_div_assoc', div_lt_iff hm1_pos]
+          have : (m : ℝ) * ε < ((m : ℝ) + 1) * ε := by
+            have : (m : ℝ) < (m : ℝ) + 1 := by linarith
+            exact (mul_lt_mul_right hε).mpr this
+          linarith
 
 /--
 Rational approximation with poles off `K`.
