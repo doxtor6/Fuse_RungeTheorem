@@ -270,7 +270,7 @@ private lemma rectangle_cauchy_with_pole
         · exact differentiableAt_id.sub_const z
         · exact sub_ne_zero.mpr hwne
       · exact (hf.differentiableAt (hU.mem_nhds hwU)).sub_const (f z)
-    exact hg_diff_at_w.congr_of_eventuallyEq h_evEq
+    exact h_evEq.congr_differentiableAt.mp hg_diff_at_w
   -- Continuity of dslope f z composed with each segment parametrisation.
   have hdslope_cont_seg : ∀ (a b : ℂ), (∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∈ U) →
       ContinuousOn (fun t : ℝ => dslope f z (a + (t : ℂ) * (b - a))) (Set.Icc (0:ℝ) 1) := by
