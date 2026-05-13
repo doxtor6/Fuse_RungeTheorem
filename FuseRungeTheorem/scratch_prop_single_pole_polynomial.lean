@@ -700,13 +700,12 @@ theorem single_pole_polynomial_approx
       have hcs : ((i.castSucc : Fin (m + 2)) : ℝ) = (i : ℝ) := by
         simp [Fin.castSucc]
       have hsucc : ((i.succ : Fin (m + 2)) : ℝ) = (i : ℝ) + 1 := by
-        push_cast
-        rfl
+        simp [Fin.succ, Fin.val_succ]
       show |((i.castSucc : Fin (m + 2)) : ℝ) / (m + 1) -
         ((i.succ : Fin (m + 2)) : ℝ) / (m + 1)| < δ
       rw [hcs, hsucc]
       have hmpos : (0 : ℝ) < m + 1 := by positivity
-      rw [div_sub_div_eq_sub_div, abs_div, abs_of_pos hmpos]
+      rw [← sub_div, abs_div, abs_of_pos hmpos]
       have hsimp : |(i : ℝ) - ((i : ℝ) + 1)| = 1 := by
         rw [show (i : ℝ) - ((i : ℝ) + 1) = -1 by ring]; simp
       rw [hsimp]
