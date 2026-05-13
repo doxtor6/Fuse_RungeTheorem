@@ -1,0 +1,9 @@
+{
+  "label": "lem:far_pole_polynomial",
+  "kind": "lemma",
+  "title": "Pole sufficiently far away is polynomially approximable",
+  "uses": [],
+  "statement": "Let \\(K \\subset \\C\\) be compact. Let \\(b \\in \\C\\) be such that\n    \\[\n      |z| < |b|\n      \\qquad \\text{for all } z \\in K .\n    \\]\n    Then for every \\(\\eps > 0\\), there exists a polynomial \\(p \\in \\C[X]\\) such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|p(z)-\\frac{1}{z-b}\\right| < \\eps .\n    \\]",
+  "proof": "For \\(z \\in K\\),\n    \\[\n      \\frac{1}{z-b}\n      =\n      -\\frac{1}{b}\\frac{1}{1-z/b}\n      =\n      -\\sum_{n=0}^{\\infty} \\frac{z^n}{b^{n+1}} .\n    \\]\n    The series converges uniformly on \\(K\\) because \\(|z/b|\\) is uniformly bounded\n    by a constant \\(<1\\). A sufficiently long partial sum is a polynomial and gives\n    the desired approximation.",
+  "leanDeclaration": "far_pole_polynomial_approx"
+}

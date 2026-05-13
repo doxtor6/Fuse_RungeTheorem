@@ -1,5 +1,5 @@
 {
-  "title": "Fuse_RungeTheorem",
+  "title": "Runge's Theorem, Polynomial Form (Connected-Complement)",
   "branch": "numina/fuse-rungetheorem",
   "source_type": "latex",
   "notes": "",
@@ -15,9 +15,39 @@
       "title": "Compact subset of an open set has a positive collar"
     },
     {
+      "label": "lem:cauchy_integral_to_pole_sum",
+      "kind": "lemma",
+      "title": "Cauchy integral approximation by finite pole sums"
+    },
+    {
       "label": "prop:rational_approximation",
       "kind": "proposition",
       "title": "Rational approximation with poles off \\(K\\)"
+    },
+    {
+      "label": "lem:compact_complement_unbounded",
+      "kind": "lemma",
+      "title": "The complement of a compact set is unbounded"
+    },
+    {
+      "label": "lem:connected_open_path_connected",
+      "kind": "lemma",
+      "title": "Connected open subsets of \\(\\C\\) are path-connected"
+    },
+    {
+      "label": "lem:path_to_infinity",
+      "kind": "lemma",
+      "title": "Path to infinity in the connected complement"
+    },
+    {
+      "label": "lem:local_pole_moving",
+      "kind": "lemma",
+      "title": "Local pole-moving lemma"
+    },
+    {
+      "label": "lem:far_pole_polynomial",
+      "kind": "lemma",
+      "title": "Pole sufficiently far away is polynomially approximable"
     },
     {
       "label": "prop:single_pole_polynomial",
@@ -29,5 +59,6 @@
       "kind": "proposition",
       "title": "Finite pole sums are polynomially approximable"
     }
-  ]
+  ],
+  "leanModule": "FuseRungeTheorem.Basic"
 }

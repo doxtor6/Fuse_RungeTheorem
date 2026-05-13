@@ -1,0 +1,9 @@
+{
+  "label": "lem:local_pole_moving",
+  "kind": "lemma",
+  "title": "Local pole-moving lemma",
+  "uses": [],
+  "statement": "Let \\(K \\subset \\C\\) be compact. Let \\(a,b \\in \\C \\setminus K\\). Suppose that\n    \\[\n      |a-b| < \\dist(b,K).\n    \\]\n    Then for every \\(\\eps > 0\\), there exists \\(N : \\mathbb{N}\\) such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|\n        \\frac{1}{z-a}\n        -\n        \\sum_{n=0}^{N}\n          \\frac{(a-b)^n}{(z-b)^{n+1}}\n      \\right|\n      < \\eps .\n    \\]\n    Thus the pole at \\(a\\) can be uniformly approximated on \\(K\\) by a rational\n    function whose only pole is at \\(b\\).",
+  "proof": "For \\(z \\in K\\),\n    \\[\n      \\frac{1}{z-a}\n      =\n      \\frac{1}{z-b-(a-b)}\n      =\n      \\frac{1}{z-b}\n      \\frac{1}{1-\\frac{a-b}{z-b}} .\n    \\]\n    Since \\(|a-b| < \\dist(b,K) \\le |z-b|\\) for all \\(z \\in K\\), the geometric\n    series converges uniformly on \\(K\\). Taking a sufficiently long partial sum\n    gives the desired uniform error bound.",
+  "leanDeclaration": "local_pole_moving"
+}

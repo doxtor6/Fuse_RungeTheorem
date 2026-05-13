@@ -1,0 +1,9 @@
+{
+  "label": "lem:compact_complement_unbounded",
+  "kind": "lemma",
+  "title": "The complement of a compact set is unbounded",
+  "uses": [],
+  "statement": "Let \\(K \\subset \\C\\) be compact. Then for every \\(R > 0\\), there exists\n    \\(b \\in \\C \\setminus K\\) such that \\(|b| > R\\).",
+  "proof": "A compact subset of \\(\\C\\) is bounded. Choose \\(b\\) with norm larger than both\n    \\(R\\) and a bound for \\(K\\).",
+  "leanDeclaration": "compact_complement_unbounded"
+}

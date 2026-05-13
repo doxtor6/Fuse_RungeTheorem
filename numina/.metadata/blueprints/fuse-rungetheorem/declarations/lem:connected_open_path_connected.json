@@ -1,0 +1,9 @@
+{
+  "label": "lem:connected_open_path_connected",
+  "kind": "lemma",
+  "title": "Connected open subsets of \\(\\C\\) are path-connected",
+  "uses": [],
+  "statement": "Let \\(V \\subset \\C\\). If \\(V\\) is open and connected, then \\(V\\) is\n    path-connected.",
+  "proof": "This is the standard theorem that open connected subsets of \\(\\mathbb{R}^n\\),\n    hence of \\(\\C\\), are path-connected. In Mathlib this is essentially the\n    instance \\texttt{IsOpen.locPathConnectedSpace} combined with\n    \\texttt{IsOpen.isConnected\\_iff\\_isPathConnected}.",
+  "leanDeclaration": "isConnected_isOpen_pathConnected_complex"
+}
