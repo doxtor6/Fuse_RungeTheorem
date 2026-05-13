@@ -34,7 +34,7 @@ Rational approximation with poles off `K`.
 
 A direct corollary of `cauchy_integral_approximated_by_pole_sum`.
 -/
-proposition rational_approximation_with_poles_off
+theorem rational_approximation_with_poles_off
     {K U : Set ℂ} {f : ℂ → ℂ}
     (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U)
     (hf : DifferentiableOn ℂ f U) :
@@ -108,7 +108,7 @@ Single pole is polynomially approximable.
 Under the connected-complement hypothesis, the function `1/(z-a)` can be
 uniformly approximated on `K` by polynomials for any `a ∉ K`.
 -/
-proposition single_pole_polynomial_approx
+theorem single_pole_polynomial_approx
     {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ))
     {a : ℂ} (ha : a ∉ K) :
     ∀ ε > 0, ∃ p : Polynomial ℂ,
@@ -120,7 +120,7 @@ Finite pole sums are polynomially approximable.
 
 Combining `single_pole_polynomial_approx` over a finite collection of poles.
 -/
-proposition finite_pole_sum_polynomial_approx
+theorem finite_pole_sum_polynomial_approx
     {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ))
     {N : ℕ} (a : Fin N → ℂ) (c : Fin N → ℂ) (ha : ∀ j, a j ∉ K) :
     ∀ ε > 0, ∃ p : Polynomial ℂ,
