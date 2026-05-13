@@ -246,7 +246,130 @@ lemma far_pole_polynomial_approx
     {b : ℂ} (hb : ∀ z ∈ K, ‖z‖ < ‖b‖) :
     ∀ ε > 0, ∃ p : Polynomial ℂ,
       ∀ z ∈ K, ‖p.eval z - 1 / (z - b)‖ < ε := by
-  sorry
+  intro ε hε
+  by_cases hKne : K.Nonempty
+  · have hcont : ContinuousOn (fun z : ℂ => ‖z‖) K := continuous_norm.continuousOn
+    obtain ⟨z₀, hz₀K, hz₀max⟩ := hK.exists_isMaxOn hKne hcont
+    set M : ℝ := ‖z₀‖ with hM_def
+    have hM_bound : ∀ z ∈ K, ‖z‖ ≤ M := fun z hz => hz₀max hz
+    have hMb : M < ‖b‖ := hb z₀ hz₀K
+    have hM_nonneg : 0 ≤ M := norm_nonneg _
+    have hb_ne : b ≠ 0 := by
+      intro hb0
+      have hbz : ‖b‖ = 0 := by rw [hb0]; simp
+      linarith [hM_nonneg]
+    have hb_pos : 0 < ‖b‖ := norm_pos_iff.mpr hb_ne
+    set q : ℝ := M / ‖b‖ with hq_def
+    have hq_nonneg : 0 ≤ q := div_nonneg hM_nonneg hb_pos.le
+    have hq_lt_one : q < 1 := by
+      rw [hq_def, div_lt_one hb_pos]; exact hMb
+    have hgap_pos : 0 < ‖b‖ - M := by linarith
+    have htends : Filter.Tendsto (fun n : ℕ => q ^ n / (‖b‖ - M)) Filter.atTop (𝓝 0) := by
+      have h₁ : Filter.Tendsto (fun n : ℕ => q ^ n) Filter.atTop (𝓝 0) :=
+        tendsto_pow_atTop_nhds_zero_of_lt_one hq_nonneg hq_lt_one
+      have h₂ := h₁.div_const (‖b‖ - M)
+      simpa using h₂
+    have hev : ∀ᶠ n in Filter.atTop, q ^ n / (‖b‖ - M) < ε := by
+      rw [Metric.tendsto_atTop] at htends
+      obtain ⟨N, hN⟩ := htends ε hε
+      filter_upwards [Filter.eventually_ge_atTop N] with n hn
+      have hd := hN n hn
+      simp only [Real.dist_eq, sub_zero] at hd
+      have hpos : 0 ≤ q ^ n / (‖b‖ - M) :=
+        div_nonneg (pow_nonneg hq_nonneg _) hgap_pos.le
+      rwa [abs_of_nonneg hpos] at hd
+    obtain ⟨N, hN⟩ := hev.exists
+    refine ⟨∑ n ∈ Finset.range N,
+      Polynomial.C (-(b ^ (n + 1))⁻¹) * Polynomial.X ^ n, ?_⟩
+    intro z hzK
+    have hzbound : ‖z‖ ≤ M := hM_bound z hzK
+    have heval :
+        (∑ n ∈ Finset.range N,
+            Polynomial.C (-(b ^ (n + 1))⁻¹) * Polynomial.X ^ n).eval z =
+          -∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1) := by
+      rw [Polynomial.eval_finset_sum, ← Finset.sum_neg_distrib]
+      apply Finset.sum_congr rfl
+      intro n _
+      rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow,
+          Polynomial.eval_X]
+      rw [div_eq_mul_inv]
+      ring
+    rw [heval]
+    have hzlt : ‖z‖ < ‖b‖ := hb z hzK
+    have hzne : z - b ≠ 0 := by
+      intro h
+      have hzeq : z = b := sub_eq_zero.mp h
+      rw [hzeq] at hzlt; exact lt_irrefl _ hzlt
+    have hb_pow_ne : ∀ n, (b ^ n : ℂ) ≠ 0 := fun n => pow_ne_zero n hb_ne
+    have hbN_ne : (b ^ N : ℂ) ≠ 0 := hb_pow_ne N
+    have hkey :
+        (-∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1)) - 1 / (z - b) =
+          -(z ^ N / (b ^ N * (z - b))) := by
+      have hzbne : z / b ≠ 1 := by
+        intro h
+        have hzeq : z = b := by
+          have := (div_eq_one_iff_eq hb_ne).mp h
+          exact this
+        rw [hzeq] at hzlt; exact lt_irrefl _ hzlt
+      have hgeom : ∑ n ∈ Finset.range N, (z / b) ^ n = ((z / b) ^ N - 1) / (z / b - 1) :=
+        geom_sum_eq hzbne N
+      have hrew : ∀ n, z ^ n / b ^ (n + 1) = (z / b) ^ n / b := by
+        intro n
+        rw [pow_succ, div_pow]
+        field_simp
+      have hsum_eq :
+          ∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1) =
+            ((z / b) ^ N - 1) / (z - b) := by
+        have : ∑ n ∈ Finset.range N, z ^ n / b ^ (n + 1) =
+            (∑ n ∈ Finset.range N, (z / b) ^ n) / b := by
+          rw [Finset.sum_div]
+          apply Finset.sum_congr rfl
+          intro n _; exact hrew n
+        rw [this, hgeom]
+        have hzb_ne : z / b - 1 ≠ 0 := sub_ne_zero.mpr hzbne
+        rw [div_div]
+        congr 1
+        field_simp
+      rw [hsum_eq]
+      have hzbpow : (z / b) ^ N = z ^ N / b ^ N := div_pow z b N
+      rw [hzbpow]
+      field_simp
+      ring
+    rw [hkey]
+    rw [norm_neg]
+    rw [norm_div, norm_mul, norm_pow, norm_pow]
+    have hzb_norm : ‖b‖ - M ≤ ‖z - b‖ := by
+      have h1 : ‖b‖ - ‖z‖ ≤ ‖z - b‖ := by
+        rw [norm_sub_rev]
+        exact norm_sub_norm_le b z
+      linarith [hM_bound z hzK]
+    have hzb_norm_pos : 0 < ‖z - b‖ := lt_of_lt_of_le hgap_pos hzb_norm
+    have hbN_norm_pos : 0 < ‖b‖ ^ N := pow_pos hb_pos N
+    have hineq : ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖) ≤ q ^ N / (‖b‖ - M) := by
+      have hq_pow_eq : q ^ N = M ^ N / ‖b‖ ^ N := by
+        rw [hq_def, div_pow]
+      rw [hq_pow_eq]
+      have rhs_eq : M ^ N / ‖b‖ ^ N / (‖b‖ - M) =
+          M ^ N / (‖b‖ ^ N * (‖b‖ - M)) := by
+        rw [div_div]
+      rw [rhs_eq]
+      have hzN_le : ‖z‖ ^ N ≤ M ^ N := pow_le_pow_left₀ (norm_nonneg z) hzbound N
+      have hdenom_le : ‖b‖ ^ N * (‖b‖ - M) ≤ ‖b‖ ^ N * ‖z - b‖ :=
+        mul_le_mul_of_nonneg_left hzb_norm hbN_norm_pos.le
+      have hdenom_pos : 0 < ‖b‖ ^ N * (‖b‖ - M) := mul_pos hbN_norm_pos hgap_pos
+      have hLHS_le_mid : ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖) ≤
+          ‖z‖ ^ N / (‖b‖ ^ N * (‖b‖ - M)) :=
+        div_le_div_of_nonneg_left (pow_nonneg (norm_nonneg z) N) hdenom_pos hdenom_le
+      have hmid_le_RHS : ‖z‖ ^ N / (‖b‖ ^ N * (‖b‖ - M)) ≤
+          M ^ N / (‖b‖ ^ N * (‖b‖ - M)) :=
+        div_le_div_of_nonneg_right hzN_le hdenom_pos.le
+      exact hLHS_le_mid.trans hmid_le_RHS
+    calc ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖)
+        ≤ q ^ N / (‖b‖ - M) := hineq
+      _ < ε := hN
+  · refine ⟨0, ?_⟩
+    intro z hz
+    exact absurd ⟨z, hz⟩ hKne
 
 /--
 Single pole is polynomially approximable.
