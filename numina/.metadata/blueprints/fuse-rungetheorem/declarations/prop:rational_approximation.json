@@ -1,0 +1,11 @@
+{
+  "label": "prop:rational_approximation",
+  "kind": "proposition",
+  "title": "Rational approximation with poles off \\(K\\)",
+  "uses": [
+    "lem:cauchy_integral_to_pole_sum"
+  ],
+  "statement": "Let \\(K \\subset U \\subset \\C\\), with \\(K\\) compact and \\(U\\) open. Let\n    \\(f : \\C \\to \\C\\) be holomorphic on \\(U\\). Then for every \\(\\eps > 0\\), there\n    exist \\(N : \\mathbb{N}\\), coefficients \\(c_1,\\dots,c_N \\in \\C\\), and poles\n    \\(a_1,\\dots,a_N \\in \\C \\setminus K\\), such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|\n        \\sum_{j=1}^N \\frac{c_j}{z-a_j} - f(z)\n      \\right| < \\eps .\n    \\]",
+  "proof": "This is exactly \\cref{lem:cauchy_integral_to_pole_sum}.",
+  "leanDeclaration": "rational_approximation_with_poles_off"
+}

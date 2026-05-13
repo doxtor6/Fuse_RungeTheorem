@@ -1,0 +1,9 @@
+{
+  "label": "lem:compact_subset_open_collar",
+  "kind": "lemma",
+  "title": "Compact subset of an open set has a positive collar",
+  "uses": [],
+  "statement": "Let \\(K,U \\subset \\C\\). If \\(K\\) is compact, \\(U\\) is open, and \\(K \\subset U\\),\n    then there exists \\(\\rho > 0\\) such that\n    \\[\n      \\{z \\in \\C : \\dist(z,K) < \\rho\\} \\subset U .\n    \\]",
+  "proof": "Since \\(K\\) is compact and \\(U^c\\) is closed, and since \\(K \\cap U^c=\\varnothing\\),\n    the distance between \\(K\\) and \\(U^c\\) is positive. Choose \\(\\rho\\) smaller than\n    this distance. (In Mathlib this is essentially\n    \\texttt{IsCompact.exists\\_thickening\\_subset\\_open}.)",
+  "leanDeclaration": "compact_subset_open_has_thickening"
+}

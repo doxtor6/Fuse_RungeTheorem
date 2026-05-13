@@ -3,5 +3,31 @@
   "branch": "numina/fuse-rungetheorem",
   "source_type": "latex",
   "notes": "",
-  "entries": []
+  "entries": [
+    {
+      "label": "thm:main",
+      "kind": "theorem",
+      "title": "Runge's theorem, polynomial form"
+    },
+    {
+      "label": "lem:compact_subset_open_collar",
+      "kind": "lemma",
+      "title": "Compact subset of an open set has a positive collar"
+    },
+    {
+      "label": "prop:rational_approximation",
+      "kind": "proposition",
+      "title": "Rational approximation with poles off \\(K\\)"
+    },
+    {
+      "label": "prop:single_pole_polynomial",
+      "kind": "proposition",
+      "title": "Single pole is polynomially approximable"
+    },
+    {
+      "label": "prop:finite_pole_sum_polynomial",
+      "kind": "proposition",
+      "title": "Finite pole sums are polynomially approximable"
+    }
+  ]
 }
