@@ -152,6 +152,7 @@ private lemma rectangle_cauchy_with_pole
     rw [dslope_of_ne f hζ, slope_def_field]
     have hne : ζ - z ≠ 0 := sub_ne_zero.mpr hζ
     field_simp
+    ring
   -- Each segment avoids z.
   -- A→B: bottom edge, im = y₀, z.im > y₀.
   have hAB_avoid : ∀ t : ℝ, A + (t : ℂ) * (B - A) ≠ z := by
@@ -189,18 +190,17 @@ private lemma rectangle_cauchy_with_pole
     intro t ht
     apply hrect_sub_U
     · -- Re component: x₀ + t * s ∈ [x₀, x₀+s]
-      have : (A + (t : ℂ) * (B - A)).re = x₀ + t * s := by
+      have hre_eq : (A + (t : ℂ) * (B - A)).re = x₀ + t * s := by
         simp [hA, hB, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re,
-              Complex.ofReal_im, Complex.mul_im, Complex.sub_im]
-        ring
-      rw [this]
+              Complex.ofReal_im]
+      rw [hre_eq]
       refine ⟨?_, ?_⟩
       · linarith [mul_nonneg ht.1 hs.le]
       · have : t * s ≤ 1 * s := mul_le_mul_of_nonneg_right ht.2 hs.le
         linarith
-    · have : (A + (t : ℂ) * (B - A)).im = y₀ := by
+    · have him_eq : (A + (t : ℂ) * (B - A)).im = y₀ := by
         simp [hA, hB, Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_im]
-      rw [this]
+      rw [him_eq]
       exact ⟨le_refl _, by linarith⟩
   have hBC_in_U : ∀ t ∈ Set.Icc (0:ℝ) 1, B + (t : ℂ) * (C - B) ∈ U := by
     intro t ht
