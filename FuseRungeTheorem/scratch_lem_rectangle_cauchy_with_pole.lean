@@ -259,18 +259,9 @@ private lemma rectangle_cauchy_with_pole
     apply DifferentiableAt.differentiableWithinAt
     have hwne : w ≠ z := hw.2
     have hwU : w ∈ U := hw.1
-    -- dslope f z w = (w - z)⁻¹ • (f w - f z) since w ≠ z.
-    have h_eq : dslope f z = fun ζ => if ζ = z then deriv f z else (ζ - z)⁻¹ * (f ζ - f z) := by
-      funext ζ
-      by_cases h : ζ = z
-      · subst h
-        simp [dslope_same]
-      · rw [dslope_of_ne f h, slope_def_field, if_neg h, div_eq_inv_mul]
-    -- We can use that on a neighborhood of w (avoiding z), dslope agrees with the explicit formula.
-    have hne_nhds : ∀ᶠ ζ in nhds w, ζ ≠ z := by
-      exact eventually_ne_nhds hwne
-    have hU_nhds : ∀ᶠ ζ in nhds w, ζ ∈ U := hU.mem_nhds hwU
-    have h_eventually : ∀ᶠ ζ in nhds w, dslope f z ζ = (ζ - z)⁻¹ * (f ζ - f z) := by
+    -- On a neighborhood of w avoiding z, dslope f z ζ = (ζ - z)⁻¹ * (f ζ - f z).
+    have hne_nhds : ∀ᶠ ζ in nhds w, ζ ≠ z := eventually_ne_nhds hwne
+    have h_evEq : (fun ζ : ℂ => (ζ - z)⁻¹ * (f ζ - f z)) =ᶠ[nhds w] dslope f z := by
       filter_upwards [hne_nhds] with ζ hζ
       rw [dslope_of_ne f hζ, slope_def_field, div_eq_inv_mul]
     have hg_diff_at_w : DifferentiableAt ℂ (fun ζ : ℂ => (ζ - z)⁻¹ * (f ζ - f z)) w := by
@@ -279,7 +270,7 @@ private lemma rectangle_cauchy_with_pole
         · exact differentiableAt_id.sub_const z
         · exact sub_ne_zero.mpr hwne
       · exact (hf.differentiableAt (hU.mem_nhds hwU)).sub_const (f z)
-    exact hg_diff_at_w.congr_of_eventuallyEq h_eventually.symm
+    exact hg_diff_at_w.congr_of_eventuallyEq h_evEq
   -- Continuity of dslope f z composed with each segment parametrisation.
   have hdslope_cont_seg : ∀ (a b : ℂ), (∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∈ U) →
       ContinuousOn (fun t : ℝ => dslope f z (a + (t : ℂ) * (b - a))) (Set.Icc (0:ℝ) 1) := by
