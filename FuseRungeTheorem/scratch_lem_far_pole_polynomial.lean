@@ -210,6 +210,8 @@ lemma far_pole_polynomial_approx
           intro n _; exact hrew n
         rw [this, hgeom]
         have hzb_ne : z / b - 1 ≠ 0 := sub_ne_zero.mpr hzbne
+        rw [div_div]
+        congr 1
         field_simp
         ring
       rw [hsum_eq]
@@ -243,10 +245,13 @@ lemma far_pole_polynomial_approx
       have hdenom_le : ‖b‖ ^ N * (‖b‖ - M) ≤ ‖b‖ ^ N * ‖z - b‖ :=
         mul_le_mul_of_nonneg_left hzb_norm hbN_norm_pos.le
       have hdenom_pos : 0 < ‖b‖ ^ N * (‖b‖ - M) := mul_pos hbN_norm_pos hgap_pos
-      apply le_trans
-      · exact div_le_div_of_nonneg_left (pow_nonneg (norm_nonneg z) N) hdenom_pos hdenom_le
-      · exact div_le_div_of_nonneg_right hzN_le hdenom_pos.le |>.trans (le_of_eq rfl)
-      -- Actually we want both directions. Let me use a simpler chain.
+      have hLHS_le_mid : ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖) ≤
+          ‖z‖ ^ N / (‖b‖ ^ N * (‖b‖ - M)) :=
+        div_le_div_of_nonneg_left (pow_nonneg (norm_nonneg z) N) hdenom_pos hdenom_le
+      have hmid_le_RHS : ‖z‖ ^ N / (‖b‖ ^ N * (‖b‖ - M)) ≤
+          M ^ N / (‖b‖ ^ N * (‖b‖ - M)) :=
+        div_le_div_of_nonneg_right hzN_le hdenom_pos.le
+      exact hLHS_le_mid.trans hmid_le_RHS
     -- Combine with hN.
     calc ‖z‖ ^ N / (‖b‖ ^ N * ‖z - b‖)
         ≤ q ^ N / (‖b‖ - M) := hineq
