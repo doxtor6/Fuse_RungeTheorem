@@ -21,6 +21,84 @@ private noncomputable def segmentIntegral (a b : ℂ) (g : ℂ → ℂ) : ℂ :=
   ∫ t in (0:ℝ)..1, g (a + (t : ℂ) * (b - a)) * (b - a)
 
 /--
+Grid cover of a compact set in an open set (sub-obligation 1 for the grid
+Cauchy representation).
+
+For `K` compact contained in open `U` and any `ρ > 0`, there exists a finite
+family of axis-parallel closed squares of side `s` with `s * Real.sqrt 2 < ρ`,
+indexed by `Fin n`, whose union covers `K` and whose closures all lie in `U`.
+
+The square indexed by `i` is specified by its lower-left corner `corner i` and
+side length `s`, i.e. the closed set
+`{w | w.re ∈ [corner i .re, corner i .re + s] ∧ w.im ∈ [corner i .im, corner i .im + s]}`.
+
+This is the "grid construction" step in the proof of the grid Cauchy
+representation lemma. It is purely a geometric/measure-theoretic fact about
+compact sets in `ℂ`; no holomorphy is involved.
+-/
+private lemma grid_squares_cover_compact
+    {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) :
+    ∃ (n : ℕ) (corner : Fin n → ℂ) (s : ℝ),
+      0 < s ∧
+      (∀ z ∈ K, ∃ i, z.re ∈ Set.Icc ((corner i).re) ((corner i).re + s) ∧
+                     z.im ∈ Set.Icc ((corner i).im) ((corner i).im + s)) ∧
+      (∀ i, ∀ w : ℂ, w.re ∈ Set.Icc ((corner i).re) ((corner i).re + s) →
+                     w.im ∈ Set.Icc ((corner i).im) ((corner i).im + s) →
+                     w ∈ U) := by
+  sorry
+
+/--
+Boundary segments of a grid covering lie in `U \ K` (sub-obligation 2).
+
+Given a finite axis-parallel grid covering of a compact `K` by closed squares
+of side `s` with closures in `U` (as produced by `grid_squares_cover_compact`),
+the oriented edges that bound exactly one square in the covering — the
+algebraic boundary of the union — form a family of segments whose images lie
+in `U \ K`.
+
+The conclusion is packaged as an existence statement: there exists a `Fin m`
+family of starts `A` and ends `B` so that every parametrised point
+`A i + t·(B i - A i)` (for `t ∈ [0,1]`) lies in `U \ K`. The auxiliary
+"each segment is a boundary edge of the grid" data is left implicit; what we
+expose downstream is exactly the boundary-segment family used by the Cauchy
+formula step.
+-/
+private lemma grid_boundary_segments_off_K
+    {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) :
+    ∃ (m : ℕ) (A B : Fin m → ℂ),
+      ∀ i, ∀ t ∈ Set.Icc (0:ℝ) 1, A i + (t : ℂ) * (B i - A i) ∈ U \ K := by
+  sorry
+
+/--
+Cauchy's integral formula on a single rectangle with one pole inside
+(sub-obligation 3 — the Mathlib gap).
+
+For a function `f` holomorphic on an open neighborhood of a closed rectangle
+`R = [x₀, x₀+s] × [y₀, y₀+s]` and a point `z` in the open interior of `R`,
+the line integral of `f(ζ)/(ζ - z)` along the positively oriented boundary
+of `R` equals `2πi · f(z)`.
+
+Mathlib has `Complex.integral_boundary_rect_eq_zero_of_differentiableOn`
+(Cauchy-Goursat for rectangles, no pole) and the analogous formula for
+circles, but not this rectangular version with one pole inside. It can be
+proven by subtracting `f(z) · 1/(ζ-z)` and computing the explicit integral
+of `1/(ζ-z)` around the rectangle boundary; we leave it stubbed here for a
+dedicated subagent.
+-/
+private lemma rectangle_cauchy_with_pole
+    {U : Set ℂ} {f : ℂ → ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (x₀ y₀ s : ℝ) (hs : 0 < s)
+    (hrect_sub_U : ∀ w : ℂ, w.re ∈ Set.Icc x₀ (x₀ + s) →
+                            w.im ∈ Set.Icc y₀ (y₀ + s) → w ∈ U)
+    (z : ℂ) (hz_int : z.re ∈ Set.Ioo x₀ (x₀ + s) ∧ z.im ∈ Set.Ioo y₀ (y₀ + s)) :
+    (segmentIntegral ⟨x₀, y₀⟩ ⟨x₀ + s, y₀⟩ (fun ζ => f ζ / (ζ - z)) +
+     segmentIntegral ⟨x₀ + s, y₀⟩ ⟨x₀ + s, y₀ + s⟩ (fun ζ => f ζ / (ζ - z)) +
+     segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ (fun ζ => f ζ / (ζ - z)) +
+     segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ (fun ζ => f ζ / (ζ - z)))
+    = 2 * (Real.pi : ℂ) * Complex.I * f z := by
+  sorry
+
+/--
 Grid-contour Cauchy representation (sub-lemma 1).
 
 For `K` compact in open `U` with `f` holomorphic on `U`, there is a finite
@@ -32,8 +110,16 @@ Cauchy's integral formula holds for every `z ∈ K`:
 The contour is the algebraic (oriented) boundary of a finite cover of `K`
 by closed axis-parallel grid squares whose closures lie in `U`, with
 interior edges cancelling.
+
+Glue proof: this is the full conjunction "segments in `U \ K`" + "Cauchy
+formula". It is bundled together as a single `sorry`-stubbed obligation
+`grid_sum_cancels`, because the segments witnessing the first conjunct and
+the Cauchy formula on those same segments must use the *same* grid. The
+genuine independent stubs above (`grid_squares_cover_compact`,
+`grid_boundary_segments_off_K`, `rectangle_cauchy_with_pole`) are the
+mathematical ingredients an eventual prover of `grid_sum_cancels` will use.
 -/
-private lemma cauchy_grid_representation
+private lemma grid_sum_cancels
     {K U : Set ℂ} {f : ℂ → ℂ}
     (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U)
     (hf : DifferentiableOn ℂ f U) :
@@ -43,6 +129,17 @@ private lemma cauchy_grid_representation
         f z = (1 / (2 * (Real.pi : ℂ) * Complex.I)) *
           ∑ i, segmentIntegral (A i) (B i) (fun ζ => f ζ / (ζ - z)) := by
   sorry
+
+private lemma cauchy_grid_representation
+    {K U : Set ℂ} {f : ℂ → ℂ}
+    (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U)
+    (hf : DifferentiableOn ℂ f U) :
+    ∃ (m : ℕ) (A B : Fin m → ℂ),
+      (∀ i, ∀ t ∈ Set.Icc (0:ℝ) 1, A i + (t : ℂ) * (B i - A i) ∈ U \ K) ∧
+      ∀ z ∈ K,
+        f z = (1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+          ∑ i, segmentIntegral (A i) (B i) (fun ζ => f ζ / (ζ - z)) :=
+  grid_sum_cancels hK hU hKU hf
 
 /--
 Uniform parametric Riemann-sum approximation of a segment integral (sub-lemma 2).
