@@ -534,84 +534,64 @@ private lemma pole_move_polynomial_chain
     intro chain hchain _hstep P ε hε
     refine ⟨P, ?_⟩
     intro z hz
-    have h0 : chain 0 = chain (Fin.last 0) := by
-      congr 1; exact Subsingleton.elim _ _
+    have h0 : (0 : Fin 1) = Fin.last 0 := rfl
     rw [h0, sub_self, norm_zero]
     exact hε
   | succ m ih =>
     intro chain hchain hstep P ε hε
     -- First step: move from chain 0 to chain 1 (using pole_move_polynomial_step).
-    have hstep0 : ‖chain (Fin.castSucc 0) - chain (Fin.succ 0)‖
-        < Metric.infDist (chain (Fin.succ 0)) K := hstep 0
-    have h_chain0_castSucc : chain (Fin.castSucc (0 : Fin (m + 1))) = chain 0 := by
-      congr 1; ext; simp
-    have h_chain0_succ : chain (Fin.succ (0 : Fin (m + 1))) =
-        chain (1 : Fin (m + 2)) := by
-      congr 1; ext; simp [Fin.succ]
-    rw [h_chain0_castSucc, h_chain0_succ] at hstep0
+    have hstep0 : ‖chain (Fin.castSucc (0 : Fin (m + 1))) - chain (Fin.succ (0 : Fin (m + 1)))‖
+        < Metric.infDist (chain (Fin.succ (0 : Fin (m + 1)))) K := hstep 0
     -- Define the sub-chain starting at index 1.
     let chain' : Fin (m + 1) → ℂ := fun i => chain i.succ
     have hchain' : ∀ i, chain' i ∉ K := fun i => hchain i.succ
     have hstep' : ∀ i : Fin m,
         ‖chain' i.castSucc - chain' i.succ‖ < Metric.infDist (chain' i.succ) K := by
       intro i
-      have hi : Fin.castSucc i.succ = (Fin.castSucc i).succ := by ext; simp
-      have hi2 : i.succ.succ = (i.succ).succ := rfl
-      change ‖chain (Fin.castSucc i).succ - chain i.succ.succ‖
+      show ‖chain i.castSucc.succ - chain i.succ.succ‖
           < Metric.infDist (chain i.succ.succ) K
-      have := hstep i.succ
-      rwa [show Fin.castSucc i.succ = (Fin.castSucc i).succ from by ext; simp,
-           show (i.succ).succ = i.succ.succ from rfl] at this
-    -- Use pole_move_polynomial_step on the first segment.
+      have h := hstep i.succ
+      have hcs : (i.succ).castSucc = i.castSucc.succ := by ext; simp
+      rw [hcs] at h
+      exact h
     -- For step lemma, we need a := chain 0, b := chain 1.
     set a₀ : ℂ := chain 0 with ha₀_def
-    set b₀ : ℂ := chain (1 : Fin (m + 2)) with hb₀_def
+    set b₀ : ℂ := chain (Fin.succ (0 : Fin (m + 1))) with hb₀_def
     have ha₀_notin : a₀ ∉ K := hchain 0
-    have hb₀_notin : b₀ ∉ K := hchain 1
-    -- Apply IH to get target polynomial Q' working from chain' 0 = chain 1.
-    -- But we need to handle the composition: P at 1/(z-a₀) → P.eval(R(1/(z-b₀))) ≈ Q'.eval(1/(z-chain m))
-    -- Actually we should: first build the intermediate polynomial P' such that
-    -- P.eval (1/(z-a₀)) ≈ P'.eval (1/(z-b₀)), then move P' from b₀ to chain (Fin.last (m+1)).
-    -- Choose error ε/2 for the first step, then ε/2 for the second step.
-    obtain ⟨P', hP'⟩ := pole_move_polynomial_step hK ha₀_notin hb₀_notin hstep0 P (ε / 2)
+    have hb₀_notin : b₀ ∉ K := hchain _
+    have hstep0' : ‖a₀ - b₀‖ < Metric.infDist b₀ K := by
+      have : chain (Fin.castSucc (0 : Fin (m + 1))) = a₀ := by
+        rw [ha₀_def]; congr 1; ext; simp
+      rw [this] at hstep0
+      exact hstep0
+    obtain ⟨P', hP'⟩ := pole_move_polynomial_step hK ha₀_notin hb₀_notin hstep0' P (ε / 2)
       (by linarith)
     -- Now apply IH on chain' with P' and ε/2.
     obtain ⟨Q, hQ⟩ := ih chain' hchain' hstep' P' (ε / 2) (by linarith)
     refine ⟨Q, ?_⟩
     intro z hz
-    -- chain' 0 = chain 1 = b₀.
-    have hchain'_0 : chain' 0 = b₀ := by
-      change chain (Fin.succ 0) = b₀
-      simp [hb₀_def, Fin.succ]
-      congr 1; ext; simp
-    -- chain' (Fin.last m) = chain (Fin.succ (Fin.last m)) = chain (Fin.last (m + 1)).
+    have hchain'_0 : chain' 0 = b₀ := rfl
     have hchain'_last : chain' (Fin.last m) = chain (Fin.last (m + 1)) := by
-      change chain (Fin.succ (Fin.last m)) = chain (Fin.last (m + 1))
+      show chain (Fin.succ (Fin.last m)) = chain (Fin.last (m + 1))
       congr 1
       ext; simp [Fin.succ, Fin.last]
     have hQ_z := hQ z hz
     rw [hchain'_0, hchain'_last] at hQ_z
     have hP'_z := hP' z hz
-    -- Triangle inequality:
-    -- ‖P.eval(1/(z-a₀)) - Q.eval(1/(z-chain (last (m+1))))‖
-    -- ≤ ‖P.eval(...) - P'.eval(1/(z-b₀))‖ + ‖P'.eval(1/(z-b₀)) - Q.eval(...)‖
-    -- < ε/2 + ε/2 = ε.
-    have htri := norm_sub_le
+    -- Triangle inequality.
+    have htri := norm_add_le
       (P.eval (1 / (z - a₀)) - P'.eval (1 / (z - b₀)))
       (P'.eval (1 / (z - b₀)) - Q.eval (1 / (z - chain (Fin.last (m + 1)))))
     have heq : (P.eval (1 / (z - a₀)) - P'.eval (1 / (z - b₀))) +
         (P'.eval (1 / (z - b₀)) - Q.eval (1 / (z - chain (Fin.last (m + 1))))) =
         P.eval (1 / (z - a₀)) - Q.eval (1 / (z - chain (Fin.last (m + 1)))) := by ring
     rw [heq] at htri
-    have : ‖P.eval (1 / (z - chain 0)) -
-        Q.eval (1 / (z - chain (Fin.last (m + 1))))‖ < ε := by
-      have hgoal : P.eval (1 / (z - chain 0)) -
-          Q.eval (1 / (z - chain (Fin.last (m + 1)))) =
-          P.eval (1 / (z - a₀)) - Q.eval (1 / (z - chain (Fin.last (m + 1)))) := by
-        rw [ha₀_def]
-      rw [hgoal]
-      linarith
-    exact this
+    have hgoal_eq : P.eval (1 / (z - chain 0)) -
+        Q.eval (1 / (z - chain (Fin.last (m + 1)))) =
+        P.eval (1 / (z - a₀)) - Q.eval (1 / (z - chain (Fin.last (m + 1)))) := by
+      rw [ha₀_def]
+    rw [hgoal_eq]
+    linarith
 
 end SinglePolePolynomial
 
