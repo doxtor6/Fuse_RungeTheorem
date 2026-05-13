@@ -8,5 +8,8 @@
   ],
   "statement": "Let \\(K \\subset \\C\\) be compact and assume \\(\\C \\setminus K\\) is connected. If\n    \\(a \\notin K\\), then for every \\(R > 0\\), there exist \\(b \\notin K\\) and a path\n    \\(\\gamma : [0,1] \\to \\C \\setminus K\\) such that\n    \\[\n      \\gamma(0)=a,\\qquad \\gamma(1)=b,\\qquad |b|>R .\n    \\]",
   "proof": "The complement \\(\\C \\setminus K\\) is open because \\(K\\) is compact, hence\n    closed. By \\cref{lem:compact_complement_unbounded}, choose \\(b \\in \\C \\setminus K\\)\n    with \\(|b|>R\\). Since \\(\\C \\setminus K\\) is open and connected, it is\n    path-connected by \\cref{lem:connected_open_path_connected}. Hence there is a\n    path from \\(a\\) to \\(b\\) inside \\(\\C \\setminus K\\).",
-  "leanDeclaration": "path_to_infinity_in_connected_complement"
+  "leanDeclaration": "path_to_infinity_in_connected_complement",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "HARD",
+  "notes": "Signature: `lemma path_to_infinity_in_connected_complement {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ)) {a : ℂ} (ha : a ∉ K) : ∀ R : ℝ, ∃ (b : ℂ) (hb : b ∉ K) (γ : Path (⟨a, ha⟩ : (Kᶜ : Set ℂ)) ⟨b, hb⟩), R < ‖b‖`. Chose Mathlib `Path` on the subtype `↑Kᶜ` with endpoints `⟨a, ha⟩` and `⟨b, hb⟩`. This packages all three blueprint conditions: `γ(0)=a`, `γ(1)=b`, and `range γ ⊆ Kᶜ` (via the subtype). Alternative spelling with `JoinedIn (Kᶜ) a b` is also viable."
 }

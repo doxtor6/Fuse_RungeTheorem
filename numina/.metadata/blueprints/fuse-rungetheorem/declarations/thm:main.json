@@ -8,5 +8,8 @@
   ],
   "statement": "Let \\(U,K \\subset \\C\\). Assume that \\(U\\) is open, \\(K\\) is compact,\n    \\(K \\subset U\\), \\(\\C \\setminus K\\) is connected, and \\(f : \\C \\to \\C\\) is\n    holomorphic on \\(U\\). Then for every \\(\\eps > 0\\), there exists a polynomial\n    \\(p \\in \\C[X]\\) such that\n    \\[\n      \\forall z \\in K,\\qquad |p(z)-f(z)| < \\eps .\n    \\]\n    Equivalently, in Lean:\n    \\[\n    \\begin{aligned}\n    &\\texttt{theorem MainTheorem \\{U K : Set ℂ\\} \\{f : ℂ → ℂ\\}}\\\\\n    &\\quad \\texttt{(hU : IsOpen U) (hK : IsCompact K) (hKU : K ⊆ U)}\\\\\n    &\\quad \\texttt{(hKc : IsConnected (Kᶜ)) (hf : DifferentiableOn ℂ f U) :}\\\\\n    &\\quad \\texttt{∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - f z‖ < ε.}\n    \\end{aligned}\n    \\]",
   "proof": "Fix \\(\\eps > 0\\). By \\cref{prop:rational_approximation}, choose a finite pole\n    sum\n    \\[\n      r(z) = \\sum_{j=1}^N \\frac{c_j}{z-a_j},\n      \\qquad a_j \\notin K,\n    \\]\n    such that\n    \\[\n      \\forall z \\in K,\\qquad |r(z)-f(z)| < \\eps/2 .\n    \\]\n    By \\cref{prop:finite_pole_sum_polynomial}, choose a polynomial \\(p\\) such that\n    \\[\n      \\forall z \\in K,\\qquad |p(z)-r(z)| < \\eps/2 .\n    \\]\n    Then for every \\(z \\in K\\),\n    \\[\n      |p(z)-f(z)|\n      \\le |p(z)-r(z)| + |r(z)-f(z)|\n      < \\eps/2+\\eps/2\n      = \\eps .\n    \\]\n    This proves the theorem.",
-  "leanDeclaration": "MainTheorem"
+  "leanDeclaration": "MainTheorem",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "HARD",
+  "notes": "Signature: `theorem MainTheorem {U K : Set ℂ} {f : ℂ → ℂ} (hU : IsOpen U) (hK : IsCompact K) (hKU : K ⊆ U) (hKc : IsConnected (Kᶜ)) (hf : DifferentiableOn ℂ f U) : ∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - f z‖ < ε`. Verbatim the Lean signature given in the blueprint."
 }

@@ -5,5 +5,8 @@
   "uses": [],
   "statement": "Let \\(V \\subset \\C\\). If \\(V\\) is open and connected, then \\(V\\) is\n    path-connected.",
   "proof": "This is the standard theorem that open connected subsets of \\(\\mathbb{R}^n\\),\n    hence of \\(\\C\\), are path-connected. In Mathlib this is essentially the\n    instance \\texttt{IsOpen.locPathConnectedSpace} combined with\n    \\texttt{IsOpen.isConnected\\_iff\\_isPathConnected}.",
-  "leanDeclaration": "isConnected_isOpen_pathConnected_complex"
+  "leanDeclaration": "isConnected_isOpen_pathConnected_complex",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "EASY",
+  "notes": "Signature: `lemma isConnected_isOpen_pathConnected_complex {V : Set ℂ} (hV : IsOpen V) (hC : IsConnected V) : IsPathConnected V`. Direct application of `IsOpen.isConnected_iff_isPathConnected` (ℂ is `LocPathConnectedSpace` via its `ℝ^n` structure)."
 }

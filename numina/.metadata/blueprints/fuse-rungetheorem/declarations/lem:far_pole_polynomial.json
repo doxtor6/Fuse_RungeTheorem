@@ -5,5 +5,8 @@
   "uses": [],
   "statement": "Let \\(K \\subset \\C\\) be compact. Let \\(b \\in \\C\\) be such that\n    \\[\n      |z| < |b|\n      \\qquad \\text{for all } z \\in K .\n    \\]\n    Then for every \\(\\eps > 0\\), there exists a polynomial \\(p \\in \\C[X]\\) such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|p(z)-\\frac{1}{z-b}\\right| < \\eps .\n    \\]",
   "proof": "For \\(z \\in K\\),\n    \\[\n      \\frac{1}{z-b}\n      =\n      -\\frac{1}{b}\\frac{1}{1-z/b}\n      =\n      -\\sum_{n=0}^{\\infty} \\frac{z^n}{b^{n+1}} .\n    \\]\n    The series converges uniformly on \\(K\\) because \\(|z/b|\\) is uniformly bounded\n    by a constant \\(<1\\). A sufficiently long partial sum is a polynomial and gives\n    the desired approximation.",
-  "leanDeclaration": "far_pole_polynomial_approx"
+  "leanDeclaration": "far_pole_polynomial_approx",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "HARD",
+  "notes": "Signature: `lemma far_pole_polynomial_approx {K : Set ℂ} (hK : IsCompact K) {b : ℂ} (hb : ∀ z ∈ K, ‖z‖ < ‖b‖) : ∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - 1 / (z - b)‖ < ε`. Uses `Polynomial ℂ` and `Polynomial.eval`. Hypothesis `∀ z ∈ K, ‖z‖ < ‖b‖` (note: not strict global bound ‖z‖ ≤ r < ‖b‖ - but compactness of K supplies the uniform gap)."
 }

@@ -5,5 +5,8 @@
   "uses": [],
   "statement": "Let \\(K \\subset \\C\\) be compact. Then for every \\(R > 0\\), there exists\n    \\(b \\in \\C \\setminus K\\) such that \\(|b| > R\\).",
   "proof": "A compact subset of \\(\\C\\) is bounded. Choose \\(b\\) with norm larger than both\n    \\(R\\) and a bound for \\(K\\).",
-  "leanDeclaration": "compact_complement_unbounded"
+  "leanDeclaration": "compact_complement_unbounded",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "EASY",
+  "notes": "Signature: `lemma compact_complement_unbounded {K : Set ℂ} (hK : IsCompact K) : ∀ R : ℝ, ∃ b : ℂ, b ∉ K ∧ R < ‖b‖`. Uses `‖·‖` (norm) consistently throughout the file; `|b|` in the blueprint corresponds to `‖b‖` for `b : ℂ`. Quantifier is over all reals `R` (blueprint says `R > 0` but the statement is trivially true for `R ≤ 0` so the stronger form is convenient)."
 }

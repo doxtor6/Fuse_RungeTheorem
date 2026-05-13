@@ -7,5 +7,8 @@
   ],
   "statement": "Let \\(K \\subset U \\subset \\C\\), with \\(K\\) compact and \\(U\\) open. Let\n    \\(f : \\C \\to \\C\\) be holomorphic on \\(U\\). Then for every \\(\\eps > 0\\), there\n    exist \\(N : \\mathbb{N}\\), coefficients \\(c_1,\\dots,c_N \\in \\C\\), and poles\n    \\(a_1,\\dots,a_N \\in \\C \\setminus K\\), such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|\n        \\sum_{j=1}^N \\frac{c_j}{z-a_j} - f(z)\n      \\right| < \\eps .\n    \\]",
   "proof": "This is exactly \\cref{lem:cauchy_integral_to_pole_sum}.",
-  "leanDeclaration": "rational_approximation_with_poles_off"
+  "leanDeclaration": "rational_approximation_with_poles_off",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "EASY",
+  "notes": "Signature: `theorem rational_approximation_with_poles_off {K U : Set ℂ} {f : ℂ → ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) (hf : DifferentiableOn ℂ f U) : ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ), (∀ j, a j ∉ K) ∧ ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε`. Statement is literally identical to `cauchy_integral_approximated_by_pole_sum`; blueprint proof is `exact`. Used Lean `theorem` keyword since `proposition` is not a Lean 4 keyword."
 }

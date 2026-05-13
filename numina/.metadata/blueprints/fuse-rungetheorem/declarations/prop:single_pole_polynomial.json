@@ -9,5 +9,8 @@
   ],
   "statement": "Let \\(K \\subset \\C\\) be compact and assume \\(\\C \\setminus K\\) is connected. If\n    \\(a \\notin K\\), then for every \\(\\eps > 0\\), there exists a polynomial\n    \\(p \\in \\C[X]\\) such that\n    \\[\n      \\forall z \\in K,\\qquad\n      \\left|p(z)-\\frac{1}{z-a}\\right| < \\eps .\n    \\]",
   "proof": "Choose \\(R\\) so large that every \\(z \\in K\\) satisfies \\(|z| < R\\). By\n    \\cref{lem:path_to_infinity}, choose a point \\(b \\in \\C \\setminus K\\) with\n    \\(|b|>R\\), and a path from \\(a\\) to \\(b\\) inside \\(\\C \\setminus K\\).\n\n    The image of this path is compact and contained in the open set\n    \\(\\C \\setminus K\\). Hence it has positive distance from \\(K\\). By uniform\n    continuity of the path, subdivide it into finitely many points\n    \\[\n      a=a_0,a_1,\\dots,a_m=b\n    \\]\n    such that\n    \\[\n      |a_i-a_{i+1}| < \\dist(a_{i+1},K)\n    \\]\n    for every \\(i\\). Applying \\cref{lem:local_pole_moving} repeatedly, the function\n    \\((z-a)^{-1}\\) is uniformly approximated on \\(K\\) by a rational function whose\n    only pole is \\(b\\). Since \\(|b|\\) is larger than \\(|z|\\) for all \\(z \\in K\\),\n    \\cref{lem:far_pole_polynomial} approximates this final pole by a polynomial.\n    Combining the finitely many error estimates gives the desired polynomial\n    approximation.",
-  "leanDeclaration": "single_pole_polynomial_approx"
+  "leanDeclaration": "single_pole_polynomial_approx",
+  "leanFile": "FuseRungeTheorem/Basic.lean",
+  "assessment": "HARD",
+  "notes": "Signature: `theorem single_pole_polynomial_approx {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ)) {a : ℂ} (ha : a ∉ K) : ∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - 1 / (z - a)‖ < ε`. Lean `theorem` keyword used (no `proposition`). Connected-complement hypothesis matches `MainTheorem` spelling `IsConnected (Kᶜ)`."
 }
