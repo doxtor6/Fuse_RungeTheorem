@@ -644,11 +644,8 @@ theorem single_pole_polynomial_approx
     -- infDist (γc t) K < ρ, so ∃ x ∈ K with dist (γc t) x < ρ.
     -- Then x ∈ thickening ρ image ⊆ Kᶜ, contradicting x ∈ K.
     have hKclosed : IsClosed K := hK.isClosed
-    have hd_lt : ∃ x ∈ K, dist (γc t) x < ρ := by
-      have := Metric.exists_dist_lt_of_infDist_lt hlt hKne
-      obtain ⟨x, hxK, hxdist⟩ := this
-      exact ⟨x, hxK, hxdist⟩
-    obtain ⟨x, hxK, hxd⟩ := hd_lt
+    obtain ⟨x, hxK, hxd⟩ : ∃ x ∈ K, dist (γc t) x < ρ :=
+      (Metric.infDist_lt_iff hKne).mp hlt
     have hx_thick : x ∈ Metric.thickening ρ image := by
       rw [Metric.mem_thickening_iff_infDist_lt ⟨γc t, ht_in⟩]
       calc Metric.infDist x image ≤ dist x (γc t) :=
@@ -667,15 +664,19 @@ theorem single_pole_polynomial_approx
     have := exists_nat_one_div_lt hδ_pos
     obtain ⟨m, hm⟩ := this
     exact ⟨m, by exact_mod_cast hm⟩
+  -- Helper: i/(m+1) ∈ [0,1] for any i : Fin (m+2).
+  have hti_mem : ∀ i : Fin (m + 2), (i : ℝ) / (m + 1) ∈ unitInterval := by
+    intro i
+    refine unitInterval.div_mem ?_ ?_ ?_
+    · exact_mod_cast Nat.zero_le _
+    · have : (0 : ℝ) < m + 1 := by positivity
+      linarith
+    · have h := i.is_le
+      have : ((i : ℕ) : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast h
+      simpa using this
   -- Build the chain at points i/(m+1) ∈ [0,1].
   set chain : Fin (m + 2) → ℂ := fun i =>
-    γc ⟨(i : ℝ) / (m + 1), unitInterval.div_mem
-      (by exact_mod_cast Nat.zero_le _) (by positivity)
-      (by
-        have : (i : ℝ) ≤ (m + 1 : ℕ) := by
-          have := Fin.is_le' (i := i)
-          exact_mod_cast this.trans (by omega)
-        simp; exact this)⟩ with hchain_def
+    γc ⟨(i : ℝ) / (m + 1), hti_mem i⟩ with hchain_def
   have hchain_notin : ∀ i, chain i ∉ K := by
     intro i hin
     have : γc _ ∈ image := ⟨_, rfl⟩
