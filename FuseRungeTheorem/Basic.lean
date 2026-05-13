@@ -131,8 +131,10 @@ lemma cauchy_integral_approximated_by_pole_sum
       · intro k _; rfl
     rw [h_reindex]
     rw [show (∑ p : pairType, coeff p.1 p.2 / (z - sample p.1 p.2))
-          = ∑ i : Fin m, ∑ j : Fin (N i), coeff i j / (z - sample i j) from by
-        rw [← Finset.sum_sigma]; rfl]
+          = ∑ i : Fin m, ∑ j : Fin (N i), coeff i j / (z - sample i j) from
+        Finset.sum_sigma (Finset.univ : Finset (Fin m))
+          (fun i => (Finset.univ : Finset (Fin (N i))))
+          (fun p => coeff p.1 p.2 / (z - sample p.1 p.2))]
     rw [hCauchy z hz, Finset.mul_sum, ← Finset.sum_sub_distrib]
     calc ‖∑ i : Fin m,
             ((∑ j : Fin (N i), coeff i j / (z - sample i j)) -
@@ -151,10 +153,9 @@ lemma cauchy_integral_approximated_by_pole_sum
       _ < ε := by
           rw [hδ_def]
           have hm1_pos : (0 : ℝ) < (m : ℝ) + 1 := by positivity
-          rw [mul_div_assoc', div_lt_iff hm1_pos]
-          have : (m : ℝ) * ε < ((m : ℝ) + 1) * ε := by
-            have : (m : ℝ) < (m : ℝ) + 1 := by linarith
-            exact (mul_lt_mul_right hε).mpr this
+          rw [mul_div_assoc', div_lt_iff₀ hm1_pos]
+          have hlt : (m : ℝ) * ε < ((m : ℝ) + 1) * ε :=
+            (mul_lt_mul_right hε).mpr (by linarith)
           linarith
 
 /--
