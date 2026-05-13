@@ -10,5 +10,6 @@
   "leanDeclaration": "cauchy_integral_approximated_by_pole_sum",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "HARD",
-  "notes": "Signature: `lemma cauchy_integral_approximated_by_pole_sum {K U : Set ℂ} {f : ℂ → ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) (hf : DifferentiableOn ℂ f U) : ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ), (∀ j, a j ∉ K) ∧ ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε`. Finite collection of poles/coefficients encoded as `Fin N → ℂ`. Holomorphy via `DifferentiableOn ℂ f U`."
+  "notes": "Signature: `lemma cauchy_integral_approximated_by_pole_sum {K U : Set ℂ} {f : ℂ → ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) (hf : DifferentiableOn ℂ f U) : ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ), (∀ j, a j ∉ K) ∧ ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε`. Finite collection of poles/coefficients encoded as `Fin N → ℂ`. Holomorphy via `DifferentiableOn ℂ f U`.",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_lem_cauchy_integral_to_pole_sum.lean"
 }

@@ -10,5 +10,6 @@
   "leanDeclaration": "rational_approximation_with_poles_off",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "EASY",
-  "notes": "Signature: `theorem rational_approximation_with_poles_off {K U : Set ℂ} {f : ℂ → ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) (hf : DifferentiableOn ℂ f U) : ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ), (∀ j, a j ∉ K) ∧ ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε`. Statement is literally identical to `cauchy_integral_approximated_by_pole_sum`; blueprint proof is `exact`. Used Lean `theorem` keyword since `proposition` is not a Lean 4 keyword."
+  "notes": "Signature: `theorem rational_approximation_with_poles_off {K U : Set ℂ} {f : ℂ → ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) (hf : DifferentiableOn ℂ f U) : ∀ ε > 0, ∃ (N : ℕ) (a : Fin N → ℂ) (c : Fin N → ℂ), (∀ j, a j ∉ K) ∧ ∀ z ∈ K, ‖(∑ j, c j / (z - a j)) - f z‖ < ε`. Statement is literally identical to `cauchy_integral_approximated_by_pole_sum`; blueprint proof is `exact`. Used Lean `theorem` keyword since `proposition` is not a Lean 4 keyword.",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_lem_cauchy_integral_to_pole_sum.lean"
 }
