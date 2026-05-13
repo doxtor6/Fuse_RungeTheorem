@@ -8,5 +8,6 @@
   "leanDeclaration": "compact_subset_open_has_thickening",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "EASY",
-  "notes": "Signature: `lemma compact_subset_open_has_thickening {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) : ∃ ρ > 0, {z : ℂ | Metric.infDist z K < ρ} ⊆ U`. Uses `Metric.infDist` to phrase the collar. Provable from Mathlib's `IsCompact.exists_thickening_subset_open` (which gives the same conclusion as `Metric.thickening ρ K ⊆ U`)."
+  "notes": "Signature: `lemma compact_subset_open_has_thickening {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) : ∃ ρ > 0, {z : ℂ | Metric.infDist z K < ρ} ⊆ U`. Uses `Metric.infDist` to phrase the collar. Provable from Mathlib's `IsCompact.exists_thickening_subset_open` (which gives the same conclusion as `Metric.thickening ρ K ⊆ U`).",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/Scratch_compact_subset_open_has_thickening.lean"
 }
