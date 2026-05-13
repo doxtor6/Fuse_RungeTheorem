@@ -1,0 +1,427 @@
+\documentclass[a4paper]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+\usepackage[capitalize,nameinlink]{cleveref}
+\usepackage{blueprint}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\dist}{\operatorname{dist}}
+
+\title{Blueprint for Runge's Theorem, Polynomial Form}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This blueprint proves the connected-complement polynomial form of Runge's
+theorem: if \(K \subset U \subset \C\), where \(U\) is open, \(K\) is compact,
+\(\C \setminus K\) is connected, and \(f\) is holomorphic on \(U\), then \(f\)
+can be approximated uniformly on \(K\) by polynomials.
+\end{abstract}
+
+\tableofcontents
+
+\section{Main statement}
+
+\begin{theorem}[Runge's theorem, polynomial form]
+\label{thm:main}
+\lean{MainTheorem}
+Let \(U,K \subset \C\). Assume that \(U\) is open, \(K\) is compact,
+\(K \subset U\), \(\C \setminus K\) is connected, and \(f : \C \to \C\) is
+holomorphic on \(U\). Then for every \(\eps > 0\), there exists a polynomial
+\(p \in \C[X]\) such that
+\[
+  \forall z \in K,\qquad |p(z)-f(z)| < \eps .
+\]
+Equivalently, in Lean:
+\[
+\begin{aligned}
+&\texttt{theorem MainTheorem \{U K : Set ℂ\} \{f : ℂ → ℂ\}}\\
+&\quad \texttt{(hU : IsOpen U) (hK : IsCompact K) (hKU : K ⊆ U)}\\
+&\quad \texttt{(hKc : IsConnected (Kᶜ)) (hf : DifferentiableOn ℂ f U) :}\\
+&\quad \texttt{∀ ε > 0, ∃ p : Polynomial ℂ, ∀ z ∈ K, ‖p.eval z - f z‖ < ε.}
+\end{aligned}
+\]
+\end{theorem}
+
+\begin{proof}
+Fix \(\eps > 0\). The proof has two main steps.
+
+First, by a rational approximation version of Runge's theorem, since \(f\) is
+holomorphic on an open neighbourhood \(U\) of the compact set \(K\), there is a
+rational function \(r\), with all poles outside \(K\), such that
+\[
+  \forall z \in K,\qquad |r(z)-f(z)| < \eps/2 .
+\]
+More concretely, \(r\) may be taken to be a finite sum of simple poles:
+\[
+  r(z) = \sum_{j=1}^N \frac{c_j}{z-a_j},
+  \qquad a_j \notin K .
+\]
+
+Second, because \(\C \setminus K\) is connected, each pole \(a_j\) can be
+``moved to infinity'' inside \(\C \setminus K\). Along this path, the local
+geometric-series identity allows one to approximate
+\[
+  \frac{1}{z-a_j}
+\]
+uniformly on \(K\) by a rational function whose pole is farther away. Iterating
+this along a finite subdivision of the path moves the pole to a point \(b_j\)
+with very large modulus. Once the pole is sufficiently far away, the expansion
+\[
+  \frac{1}{z-b_j}
+  =
+  -\frac{1}{b_j}\frac{1}{1-z/b_j}
+  =
+  -\sum_{n=0}^{\infty} \frac{z^n}{b_j^{n+1}}
+\]
+converges uniformly on \(K\). Hence \((z-b_j)^{-1}\), and therefore also
+\((z-a_j)^{-1}\), can be uniformly approximated on \(K\) by polynomials.
+
+Applying this to the finitely many poles \(a_1,\dots,a_N\), with error bounds
+chosen small enough so that the total error is \(<\eps/2\), we obtain a
+polynomial \(p\) such that
+\[
+  \forall z \in K,\qquad |p(z)-r(z)| < \eps/2 .
+\]
+Therefore, for all \(z \in K\),
+\[
+  |p(z)-f(z)|
+  \le |p(z)-r(z)| + |r(z)-f(z)|
+  < \eps/2+\eps/2
+  = \eps .
+\]
+This proves the theorem.
+\end{proof}
+
+\section{Analytic preparation}
+
+\begin{lemma}[Compact subset of an open set has a positive collar]
+\label{lem:compact_subset_open_collar}
+\lean{compact_subset_open_has_thickening}
+Let \(K,U \subset \C\). If \(K\) is compact, \(U\) is open, and \(K \subset U\),
+then there exists \(\rho > 0\) such that
+\[
+  \{z \in \C : \dist(z,K) < \rho\} \subset U .
+\]
+\end{lemma}
+
+\begin{proof}
+Since \(K\) is compact and \(U^c\) is closed, and since \(K \cap U^c=\varnothing\),
+the distance between \(K\) and \(U^c\) is positive. Choose \(\rho\) smaller than
+this distance.
+\end{proof}
+
+\begin{lemma}[Cauchy integral approximation by finite pole sums]
+\label{lem:cauchy_integral_to_pole_sum}
+\lean{cauchy_integral_approximated_by_pole_sum}
+Let \(K \subset U \subset \C\), with \(K\) compact and \(U\) open. Let
+\(f : \C \to \C\) be holomorphic on \(U\). Then for every \(\eps > 0\), there
+exist finitely many points \(a_1,\dots,a_N \in \C \setminus K\) and coefficients
+\(c_1,\dots,c_N \in \C\) such that
+\[
+  \forall z \in K,\qquad
+  \left|
+    \sum_{j=1}^N \frac{c_j}{z-a_j} - f(z)
+  \right| < \eps .
+\]
+\end{lemma}
+
+\begin{proof}
+Using \cref{lem:compact_subset_open_collar}, choose a small neighbourhood of
+\(K\) whose closure is contained in \(U\). Cover \(K\) by finitely many small
+closed squares whose union is contained in this neighbourhood. Let \(\Gamma\)
+be the positively oriented boundary of the union of these squares, after
+cancelling internal edges.
+
+For \(z \in K\), Cauchy's integral formula gives
+\[
+  f(z)
+  =
+  \frac{1}{2\pi i}
+  \int_\Gamma \frac{f(\zeta)}{\zeta-z}\,d\zeta .
+\]
+The curve \(\Gamma\) is compact and disjoint from \(K\), so the kernel
+\[
+  (\zeta,z) \mapsto \frac{f(\zeta)}{\zeta-z}
+\]
+is uniformly continuous on \(\Gamma \times K\). Therefore the above contour
+integral can be uniformly approximated, for \(z \in K\), by Riemann sums of the
+form
+\[
+  \sum_{j=1}^N \frac{c_j}{a_j-z}.
+\]
+Changing signs in the coefficients gives the desired form
+\[
+  \sum_{j=1}^N \frac{c_j}{z-a_j}.
+\]
+Each pole \(a_j\) lies on \(\Gamma\), hence outside \(K\).
+\end{proof}
+
+\begin{proposition}[Rational approximation with poles off \(K\)]
+\label{prop:rational_approximation}
+\lean{rational_approximation_with_poles_off}
+Let \(K \subset U \subset \C\), with \(K\) compact and \(U\) open. Let
+\(f : \C \to \C\) be holomorphic on \(U\). Then for every \(\eps > 0\), there
+exist \(N : \mathbb{N}\), coefficients \(c_1,\dots,c_N \in \C\), and poles
+\(a_1,\dots,a_N \in \C \setminus K\), such that
+\[
+  \forall z \in K,\qquad
+  \left|
+    \sum_{j=1}^N \frac{c_j}{z-a_j} - f(z)
+  \right| < \eps .
+\]
+\end{proposition}
+
+\begin{proof}
+This is exactly \cref{lem:cauchy_integral_to_pole_sum}.
+\end{proof}
+
+\section{Moving poles to infinity}
+
+\begin{lemma}[The complement of a compact set is unbounded]
+\label{lem:compact_complement_unbounded}
+\lean{compact_complement_unbounded}
+Let \(K \subset \C\) be compact. Then for every \(R > 0\), there exists
+\(b \in \C \setminus K\) such that \(|b| > R\).
+\end{lemma}
+
+\begin{proof}
+A compact subset of \(\C\) is bounded. Choose \(b\) with norm larger than both
+\(R\) and a bound for \(K\).
+\end{proof}
+
+\begin{lemma}[Connected open subsets of \(\C\) are path-connected]
+\label{lem:connected_open_path_connected}
+\lean{isConnected_isOpen_pathConnected_complex}
+Let \(V \subset \C\). If \(V\) is open and connected, then \(V\) is
+path-connected.
+\end{lemma}
+
+\begin{proof}
+This is the standard theorem that open connected subsets of \(\mathbb{R}^n\),
+hence of \(\C\), are path-connected. One proves that the path component of a
+point is both open and closed in \(V\), and then uses connectedness.
+\end{proof}
+
+\begin{lemma}[Path to infinity in the connected complement]
+\label{lem:path_to_infinity}
+\lean{path_to_infinity_in_connected_complement}
+Let \(K \subset \C\) be compact and assume \(\C \setminus K\) is connected. If
+\(a \notin K\), then for every \(R > 0\), there exist \(b \notin K\) and a path
+\(\gamma : [0,1] \to \C \setminus K\) such that
+\[
+  \gamma(0)=a,\qquad \gamma(1)=b,\qquad |b|>R .
+\]
+\end{lemma}
+
+\begin{proof}
+The complement \(\C \setminus K\) is open because \(K\) is compact, hence
+closed. By \cref{lem:compact_complement_unbounded}, choose \(b \in \C \setminus K\)
+with \(|b|>R\). Since \(\C \setminus K\) is open and connected, it is
+path-connected by \cref{lem:connected_open_path_connected}. Hence there is a
+path from \(a\) to \(b\) inside \(\C \setminus K\).
+\end{proof}
+
+\begin{lemma}[Local pole-moving lemma]
+\label{lem:local_pole_moving}
+\lean{local_pole_moving}
+Let \(K \subset \C\) be compact. Let \(a,b \in \C \setminus K\). Suppose that
+\[
+  |a-b| < \dist(b,K).
+\]
+Then for every \(\eps > 0\), there exists \(N : \mathbb{N}\) such that
+\[
+  \forall z \in K,\qquad
+  \left|
+    \frac{1}{z-a}
+    -
+    \sum_{n=0}^{N}
+      \frac{(a-b)^n}{(z-b)^{n+1}}
+  \right|
+  < \eps .
+\]
+Thus the pole at \(a\) can be uniformly approximated on \(K\) by a rational
+function whose only pole is at \(b\).
+\end{lemma}
+
+\begin{proof}
+For \(z \in K\),
+\[
+  \frac{1}{z-a}
+  =
+  \frac{1}{z-b-(a-b)}
+  =
+  \frac{1}{z-b}
+  \frac{1}{1-\frac{a-b}{z-b}} .
+\]
+Since \(|a-b| < \dist(b,K) \le |z-b|\) for all \(z \in K\), the geometric
+series converges uniformly on \(K\). Taking a sufficiently long partial sum
+gives the desired uniform error bound.
+\end{proof}
+
+\begin{lemma}[Pole sufficiently far away is polynomially approximable]
+\label{lem:far_pole_polynomial}
+\lean{far_pole_polynomial_approx}
+Let \(K \subset \C\) be compact. Let \(b \in \C\) be such that
+\[
+  |z| < |b|
+  \qquad \text{for all } z \in K .
+\]
+Then for every \(\eps > 0\), there exists a polynomial \(p \in \C[X]\) such that
+\[
+  \forall z \in K,\qquad
+  \left|p(z)-\frac{1}{z-b}\right| < \eps .
+\]
+\end{lemma}
+
+\begin{proof}
+For \(z \in K\),
+\[
+  \frac{1}{z-b}
+  =
+  -\frac{1}{b}\frac{1}{1-z/b}
+  =
+  -\sum_{n=0}^{\infty} \frac{z^n}{b^{n+1}} .
+\]
+The series converges uniformly on \(K\) because \(|z/b|\) is uniformly bounded
+by a constant \(<1\). A sufficiently long partial sum is a polynomial and gives
+the desired approximation.
+\end{proof}
+
+\begin{proposition}[Single pole is polynomially approximable]
+\label{prop:single_pole_polynomial}
+\lean{single_pole_polynomial_approx}
+Let \(K \subset \C\) be compact and assume \(\C \setminus K\) is connected. If
+\(a \notin K\), then for every \(\eps > 0\), there exists a polynomial
+\(p \in \C[X]\) such that
+\[
+  \forall z \in K,\qquad
+  \left|p(z)-\frac{1}{z-a}\right| < \eps .
+\]
+\end{proposition}
+
+\begin{proof}
+Choose \(R\) so large that every \(z \in K\) satisfies \(|z| < R\). By
+\cref{lem:path_to_infinity}, choose a point \(b \in \C \setminus K\) with
+\(|b|>R\), and a path from \(a\) to \(b\) inside \(\C \setminus K\).
+
+The image of this path is compact and contained in the open set
+\(\C \setminus K\). Hence it has positive distance from \(K\). By uniform
+continuity of the path, subdivide it into finitely many points
+\[
+  a=a_0,a_1,\dots,a_m=b
+\]
+such that
+\[
+  |a_i-a_{i+1}| < \dist(a_{i+1},K)
+\]
+for every \(i\). Applying \cref{lem:local_pole_moving} repeatedly, the function
+\((z-a)^{-1}\) is uniformly approximated on \(K\) by a rational function whose
+only pole is \(b\). Since \(|b|\) is larger than \(|z|\) for all \(z \in K\),
+\cref{lem:far_pole_polynomial} approximates this final pole by a polynomial.
+Combining the finitely many error estimates gives the desired polynomial
+approximation.
+\end{proof}
+
+\begin{proposition}[Finite pole sums are polynomially approximable]
+\label{prop:finite_pole_sum_polynomial}
+\lean{finite_pole_sum_polynomial_approx}
+Let \(K \subset \C\) be compact and assume \(\C \setminus K\) is connected. Let
+\(a_1,\dots,a_N \in \C \setminus K\) and \(c_1,\dots,c_N \in \C\). Then for
+every \(\eps > 0\), there exists a polynomial \(p \in \C[X]\) such that
+\[
+  \forall z \in K,\qquad
+  \left|
+    p(z) -
+    \sum_{j=1}^N \frac{c_j}{z-a_j}
+  \right|
+  < \eps .
+\]
+\end{proposition}
+
+\begin{proof}
+For each \(j\), apply \cref{prop:single_pole_polynomial} to approximate
+\((z-a_j)^{-1}\) by a polynomial \(q_j\). Choose the error for \(q_j\) small
+enough so that after multiplication by \(|c_j|\) and summation over the finite
+set \(j=1,\dots,N\), the total error is \(<\eps\). Then
+\[
+  p(z) := \sum_{j=1}^N c_j q_j(z)
+\]
+is a polynomial and satisfies the required bound.
+\end{proof}
+
+\section{Final assembly}
+
+\begin{proof}[Proof of \cref{thm:main}]
+Let \(\eps > 0\). By \cref{prop:rational_approximation}, choose a finite pole
+sum
+\[
+  r(z) = \sum_{j=1}^N \frac{c_j}{z-a_j},
+  \qquad a_j \notin K,
+\]
+such that
+\[
+  \forall z \in K,\qquad |r(z)-f(z)| < \eps/2 .
+\]
+By \cref{prop:finite_pole_sum_polynomial}, choose a polynomial \(p\) such that
+\[
+  \forall z \in K,\qquad |p(z)-r(z)| < \eps/2 .
+\]
+Then for every \(z \in K\),
+\[
+  |p(z)-f(z)|
+  \le |p(z)-r(z)| + |r(z)-f(z)|
+  < \eps/2+\eps/2
+  = \eps .
+\]
+Therefore
+\[
+  \exists p : \C[X],\quad
+  \forall z \in K,\quad |p(z)-f(z)| < \eps .
+\]
+This proves the theorem.
+\end{proof}
+
+\section{Lean formalization notes}
+
+\begin{itemize}
+  \item The main theorem should use the existing Lean statement:
+  \[
+  \texttt{DifferentiableOn ℂ f U}
+  \]
+  as the holomorphicity assumption.
+
+  \item The hardest formal ingredients are not the final \(\eps/2\) argument,
+  but the analytic approximation lemmas:
+  \[
+  \texttt{cauchy\_integral\_approximated\_by\_pole\_sum}
+  \]
+  and
+  \[
+  \texttt{single\_pole\_polynomial\_approx}.
+  \]
+
+  \item If a shorter formalization route is available in mathlib, one can
+  replace \cref{prop:rational_approximation} by an existing Runge-type rational
+  approximation theorem, and then only formalize the connected-complement
+  reduction from rational functions to polynomials.
+
+  \item The final theorem depends conceptually on the following chain:
+  \[
+  \text{holomorphic on neighbourhood}
+  \Rightarrow
+  \text{finite pole-sum approximation}
+  \Rightarrow
+  \text{move poles to infinity}
+  \Rightarrow
+  \text{polynomial approximation}.
+  \]
+\end{itemize}
+
+\end{document}
