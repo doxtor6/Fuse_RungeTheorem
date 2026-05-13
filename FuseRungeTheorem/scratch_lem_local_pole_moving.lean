@@ -108,6 +108,63 @@ lemma local_pole_moving
     ∀ ε > 0, ∃ N : ℕ,
       ∀ z ∈ K,
         ‖1 / (z - a) - ∑ n ∈ Finset.range (N + 1), (a - b) ^ n / (z - b) ^ (n + 1)‖ < ε := by
+  intro ε hε
+  -- Handle K empty separately.
+  by_cases hKemp : K = ∅
+  · refine ⟨0, ?_⟩
+    intro z hz
+    rw [hKemp] at hz
+    exact absurd hz (Set.notMem_empty z)
+  -- K nonempty case.
+  have hKne : K.Nonempty := Set.nonempty_iff_ne_empty.mpr hKemp
+  set d : ℝ := Metric.infDist b K with hd_def
+  set r : ℝ := ‖a - b‖ with hr_def
+  -- Positivity of d.
+  have hd_pos : 0 < d := by
+    have hKclosed : IsClosed K := hK.isClosed
+    exact (hKclosed.notMem_iff_infDist_pos hKne).mp hb
+  have hr_nonneg : 0 ≤ r := norm_nonneg _
+  have hr_lt_d : r < d := hab
+  -- For every z ∈ K, ‖z - b‖ ≥ d > 0.
+  have hzb_ge : ∀ z ∈ K, d ≤ ‖z - b‖ := by
+    intro z hz
+    have := Metric.infDist_le_dist_of_mem hz (x := b)
+    -- this : Metric.infDist b K ≤ dist b z
+    rw [show dist b z = ‖z - b‖ from by rw [dist_comm]; exact Complex.dist_eq z b] at this
+    exact this
+  -- d - r > 0, useful for bounding ‖z - a‖ from below.
+  have hd_minus_r_pos : 0 < d - r := sub_pos.mpr hr_lt_d
+  -- ‖z - a‖ ≥ d - r for z ∈ K.
+  have hza_ge : ∀ z ∈ K, d - r ≤ ‖z - a‖ := by
+    intro z hz
+    have h1 : d ≤ ‖z - b‖ := hzb_ge z hz
+    have h2 : ‖z - b‖ ≤ ‖z - a‖ + ‖a - b‖ := by
+      have := norm_sub_le (z - a) (b - a)
+      have heq1 : (z - a) - (b - a) = z - b := by ring
+      have heq2 : ‖b - a‖ = ‖a - b‖ := norm_sub_rev b a
+      rw [heq1, heq2] at this
+      -- Wait: norm_sub_le gives ‖x + y‖ ≤ ‖x‖ + ‖y‖, not what we need.
+      sorry
+    linarith
+  -- Pick N with q^{N+1} / (d - r) < ε, where q = r / d.
+  set q : ℝ := r / d with hq_def
+  have hq_nonneg : 0 ≤ q := div_nonneg hr_nonneg hd_pos.le
+  have hq_lt_one : q < 1 := by
+    rw [hq_def]
+    rw [div_lt_one hd_pos]
+    exact hr_lt_d
+  -- q^n → 0, so q^n * (something) < ε eventually.
+  have htends : Filter.Tendsto (fun n : ℕ => q ^ (n + 1) / (d - r))
+      Filter.atTop (𝓝 (0 / (d - r))) := by
+    apply Filter.Tendsto.div_const
+    have hbase := tendsto_pow_atTop_nhds_zero_of_lt_one hq_nonneg hq_lt_one
+    exact hbase.comp (Filter.tendsto_add_atTop_nat 1)
+  rw [zero_div] at htends
+  have hev : ∀ᶠ n in Filter.atTop, q ^ (n + 1) / (d - r) < ε := by
+    have := htends.eventually (gt_mem_nhds hε)
+    exact this
+  obtain ⟨N, hN⟩ := hev.exists
+  -- Wait, hev.exists is wrong; need to use Filter.eventually_atTop.
   sorry
 
 /--
