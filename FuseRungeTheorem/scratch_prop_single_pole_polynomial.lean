@@ -455,8 +455,7 @@ private lemma pole_move_polynomial_step
     apply Finset.sum_congr rfl
     intro n _
     rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow, Polynomial.eval_X]
-    rw [one_div, inv_pow, pow_succ, mul_inv, ← mul_assoc, ← one_div, ← one_div, ← div_eq_mul_inv,
-        ← div_eq_mul_inv, mul_comm]
+    rw [one_div, inv_pow, pow_succ]
     field_simp
   -- Choose Q := P.comp R, so Q.eval (1/(z-b)) = P.eval (R.eval (1/(z-b))) = P.eval (partial sum).
   refine ⟨P.comp R, ?_⟩
@@ -471,11 +470,10 @@ private lemma pole_move_polynomial_step
   -- ‖1/(z-a)‖ ≤ 1/(d-r) < M.
   have hinvza_norm : ‖(1 / (z - a) : ℂ)‖ ≤ 1 / (d - r) := by
     rw [norm_div, norm_one]
-    rw [div_le_div_iff (by positivity) hd_minus_r_pos]
-    have := hza_ge z hz
-    have h_za_pos : 0 < ‖z - a‖ := lt_of_lt_of_le hd_minus_r_pos this
-    rw [one_mul]
-    have := hza_ge z hz; linarith
+    have h_za := hza_ge z hz
+    have h_za_pos : 0 < ‖z - a‖ := lt_of_lt_of_le hd_minus_r_pos h_za
+    rw [div_le_div_iff₀ h_za_pos hd_minus_r_pos, one_mul, one_mul]
+    exact h_za
   have hinvza_lt_M : ‖(1 / (z - a) : ℂ)‖ < M := by
     have : 1 / (d - r) < M := by rw [hM_def]; linarith
     linarith [hinvza_norm]
@@ -486,13 +484,14 @@ private lemma pole_move_polynomial_step
   set S : ℂ := ∑ n ∈ Finset.range (N + 1), (a - b) ^ n / (z - b) ^ (n + 1) with hS_def
   have hS_close : ‖1 / (z - a) - S‖ < η' := hpartial
   have hS_norm : ‖S‖ ≤ M := by
-    have h1 : ‖S‖ ≤ ‖1 / (z - a)‖ + ‖1 / (z - a) - S‖ := by
-      have := norm_sub_norm_le (1 / (z - a)) S
-      have h2 : ‖1 / (z - a) - S‖ = ‖S - 1 / (z - a)‖ := by rw [norm_sub_rev]
-      linarith [norm_sub_le (1 / (z - a) : ℂ) S, this]
+    have h1 : ‖S‖ ≤ ‖1 / (z - a)‖ + ‖S - 1 / (z - a)‖ := by
+      have := norm_add_le (1 / (z - a) : ℂ) (S - 1 / (z - a))
+      have heq : (1 / (z - a) : ℂ) + (S - 1 / (z - a)) = S := by ring
+      rw [heq] at this; exact this
+    have hsymm : ‖S - 1 / (z - a)‖ = ‖1 / (z - a) - S‖ := by rw [norm_sub_rev]
+    rw [hsymm] at h1
     have h2 : ‖1 / (z - a)‖ + ‖1 / (z - a) - S‖ ≤ 1 / (d - r) + 1 := by
-      have := hS_close
-      linarith [hinvza_norm, hη'_le_one]
+      linarith [hinvza_norm, hη'_le_one, hS_close.le]
     rw [hM_def]; linarith
   have hS_mem : S ∈ Metric.closedBall (0 : ℂ) M := by
     rw [Metric.mem_closedBall, dist_zero_right]; exact hS_norm
