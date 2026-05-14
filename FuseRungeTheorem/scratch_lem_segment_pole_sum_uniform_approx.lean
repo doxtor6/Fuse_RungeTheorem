@@ -780,6 +780,183 @@ function `g` continuous on that image, the parametric contour-integral functiona
 `z ↦ (1/(2πi)) · ∫_{a → b} g(ζ)/(ζ - z) dζ` is uniformly approximated on `K` by
 finite pole-sums `∑ⱼ cⱼ/(z - aⱼ)` whose poles `aⱼ` lie on the segment image.
 -/
+/-- Generic uniform Riemann-sum approximation: for a continuous function
+`F : ℝ × ℂ → ℂ` and a compact `Z ⊆ ℂ`, the left-endpoint Riemann sum
+`(1/N) ∑_{j<N} F(j/N, z)` approximates `∫₀¹ F(t, z) dt` uniformly in `z ∈ Z`. -/
+private lemma riemann_sum_uniform_approx_continuous_param
+    {Z : Set ℂ} (hZ : IsCompact Z)
+    (F : ℝ → ℂ → ℂ)
+    (hF : ContinuousOn (fun p : ℝ × ℂ => F p.1 p.2) (Set.Icc (0:ℝ) 1 ×ˢ Z)) :
+    ∀ ε > 0, ∃ N : ℕ, 0 < N ∧ ∀ z ∈ Z,
+      ‖(∑ j : Fin N, F (j / N) z / N) - ∫ t in (0:ℝ)..1, F t z‖ < ε := by
+  intro ε hε
+  -- The product set is compact.
+  have hprod : IsCompact (Set.Icc (0:ℝ) 1 ×ˢ Z) := isCompact_Icc.prod hZ
+  -- F is uniformly continuous on the product.
+  have hUC : UniformContinuousOn (fun p : ℝ × ℂ => F p.1 p.2)
+      (Set.Icc (0:ℝ) 1 ×ˢ Z) :=
+    hprod.uniformContinuousOn_of_continuous hF
+  -- Get δ from uniform continuity for the target ε' = ε/2.
+  have hε2 : (0:ℝ) < ε / 2 := by linarith
+  rw [Metric.uniformContinuousOn_iff] at hUC
+  obtain ⟨δ, hδpos, hδ⟩ := hUC (ε / 2) hε2
+  -- Pick N large enough that 1/N < δ.
+  obtain ⟨N, hN_pos, hN_lt⟩ : ∃ N : ℕ, 0 < N ∧ (1 / (N : ℝ)) < δ := by
+    obtain ⟨N, hN⟩ := exists_nat_gt (1 / δ)
+    refine ⟨N + 1, Nat.succ_pos N, ?_⟩
+    have hN1 : (1:ℝ) / δ < N + 1 := lt_of_lt_of_le hN (by exact_mod_cast Nat.le_succ N)
+    have hNpos : (0:ℝ) < (N : ℝ) + 1 := by positivity
+    rw [div_lt_iff₀ hNpos]
+    rw [div_lt_iff₀ hδpos] at hN1
+    linarith
+  refine ⟨N, hN_pos, ?_⟩
+  intro z hz
+  -- Define I_j(z) = ∫ from j/N to (j+1)/N of F(t, z) dt.
+  -- Then ∑ I_j = ∫₀¹ F.
+  set t_node : ℕ → ℝ := fun k => (k : ℝ) / N with ht_node_def
+  have ht_node_zero : t_node 0 = 0 := by simp [ht_node_def]
+  have ht_node_N : t_node N = 1 := by
+    simp [ht_node_def]
+    field_simp
+  -- For each j, F(·, z) is integrable on [j/N, (j+1)/N].
+  have hF_cont_z : ContinuousOn (fun t : ℝ => F t z) (Set.Icc (0:ℝ) 1) := by
+    have hz_mem : (fun t : ℝ => (t, z)) '' Set.Icc (0:ℝ) 1 ⊆
+        Set.Icc (0:ℝ) 1 ×ˢ Z := by
+      rintro p ⟨t, ht, rfl⟩
+      exact ⟨ht, hz⟩
+    intro t ht
+    have hcont_prod : ContinuousOn (fun t : ℝ => ((t, z) : ℝ × ℂ)) (Set.Icc (0:ℝ) 1) :=
+      (continuous_id.prodMk continuous_const).continuousOn
+    have := (hF.comp hcont_prod hz_mem) t ht
+    exact this
+  have hF_int01 : IntervalIntegrable (fun t : ℝ => F t z) MeasureTheory.volume 0 1 := by
+    apply ContinuousOn.intervalIntegrable
+    rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)]
+    exact hF_cont_z
+  -- Each subinterval is integrable.
+  have h_step_le : ∀ k : ℕ, k ≤ N → t_node k ≤ t_node (k + 1) := by
+    intro k _
+    apply div_le_div_of_nonneg_right _ (by exact_mod_cast hN_pos)
+    exact_mod_cast Nat.le_succ k
+  have h_step_in_Icc : ∀ k : ℕ, k ≤ N → ∀ t ∈ Set.Icc (t_node k) (t_node (k+1)),
+      t ∈ Set.Icc (0:ℝ) 1 := by
+    intro k hk t ht
+    refine ⟨?_, ?_⟩
+    · have h1 : (0:ℝ) ≤ t_node k := by
+        apply div_nonneg (by exact_mod_cast Nat.zero_le k) (by exact_mod_cast hN_pos.le)
+      linarith [ht.1]
+    · have h2 : t_node (k+1) ≤ 1 := by
+        have hkN : (k:ℝ) + 1 ≤ N := by exact_mod_cast hk
+        rw [ht_node_def]
+        push_cast
+        rw [div_le_one (by exact_mod_cast hN_pos)]
+        linarith
+      linarith [ht.2]
+  have h_subint : ∀ k < N, IntervalIntegrable (fun t : ℝ => F t z)
+      MeasureTheory.volume (t_node k) (t_node (k+1)) := by
+    intro k hk
+    apply ContinuousOn.intervalIntegrable
+    have hsub : Set.uIcc (t_node k) (t_node (k+1)) ⊆ Set.Icc (0:ℝ) 1 := by
+      rw [Set.uIcc_of_le (h_step_le k hk.le)]
+      intro t ht
+      exact h_step_in_Icc k hk.le t ht
+    exact hF_cont_z.mono hsub
+  -- Integral equals the sum of subinterval integrals.
+  have h_integral_split :
+      ∫ t in (0:ℝ)..1, F t z =
+        ∑ k ∈ Finset.range N, ∫ t in t_node k..t_node (k+1), F t z := by
+    rw [← ht_node_zero, ← ht_node_N]
+    exact (intervalIntegral.sum_integral_adjacent_intervals h_subint).symm
+  -- For each j, the constant value F(j/N, z)/N equals the integral of F(j/N, z)/N over [j/N, (j+1)/N].
+  have h_const_int : ∀ k < N, F (t_node k) z / N =
+      ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
+    intro k hk
+    rw [intervalIntegral.integral_const]
+    have : t_node (k+1) - t_node k = (1:ℝ) / N := by
+      rw [ht_node_def]
+      push_cast
+      field_simp
+    rw [this]
+    rw [smul_eq_mul]
+    ring
+  -- The sum of constants equals the sum of integrals.
+  have h_sum_const :
+      ∑ j : Fin N, F (j / N) z / N =
+        ∑ k ∈ Finset.range N, ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
+    rw [Finset.sum_range fun k => ∫ _ in t_node k..t_node (k+1), F (t_node k) z]
+    apply Finset.sum_congr rfl
+    intro k _
+    have hk : (k : ℕ) < N := k.isLt
+    rw [← h_const_int k hk]
+    rfl
+  -- Compute the difference as a single integral.
+  rw [h_sum_const, h_integral_split, ← Finset.sum_sub_distrib]
+  -- Now we have sum over k of (∫ ... constant - ∫ ... variable).
+  -- Bound by triangle inequality: |sum| ≤ sum |...| ≤ N * (1/N) * (ε/2) = ε/2 < ε.
+  have h_diff_bound : ∀ k ∈ Finset.range N,
+      ‖(∫ _ in t_node k..t_node (k+1), F (t_node k) z) -
+       (∫ t in t_node k..t_node (k+1), F t z)‖ ≤ (ε/2) * (1/N) := by
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [← intervalIntegral.integral_sub (by
+        apply ContinuousOn.intervalIntegrable
+        apply continuousOn_const) (h_subint k hk)]
+    -- bound by uniform continuity
+    have hbound : ∀ t ∈ Set.uIcc (t_node k) (t_node (k+1)),
+        ‖F (t_node k) z - F t z‖ ≤ ε / 2 := by
+      intro t ht
+      rw [Set.uIcc_of_le (h_step_le k hk.le)] at ht
+      have htInIcc : t ∈ Set.Icc (0:ℝ) 1 := h_step_in_Icc k hk.le t ht
+      have hk_in_Icc : t_node k ∈ Set.Icc (0:ℝ) 1 := by
+        refine ⟨?_, ?_⟩
+        · exact div_nonneg (by exact_mod_cast Nat.zero_le k) (by exact_mod_cast hN_pos.le)
+        · rw [ht_node_def]
+          rw [div_le_one (by exact_mod_cast hN_pos)]
+          exact_mod_cast hk.le
+      -- compute distance ≤ 1/N < δ
+      have hdist : dist ((t_node k, z) : ℝ × ℂ) ((t, z) : ℝ × ℂ) < δ := by
+        rw [Prod.dist_eq]
+        simp
+        have hdtt : dist (t_node k) t ≤ 1 / N := by
+          rw [Real.dist_eq, abs_le]
+          constructor
+          · have : t - t_node k ≤ t_node (k+1) - t_node k := by linarith [ht.2]
+            have h2 : t_node (k+1) - t_node k = 1 / N := by
+              rw [ht_node_def]; push_cast; field_simp
+            linarith
+          · linarith [ht.1]
+        linarith
+      have hp1 : (t_node k, z) ∈ Set.Icc (0:ℝ) 1 ×ˢ Z := ⟨hk_in_Icc, hz⟩
+      have hp2 : (t, z) ∈ Set.Icc (0:ℝ) 1 ×ˢ Z := ⟨htInIcc, hz⟩
+      have := hδ (t_node k, z) hp1 (t, z) hp2 hdist
+      simp at this
+      rw [dist_eq_norm] at this
+      linarith [this.le]
+    have hlen : |t_node (k+1) - t_node k| = 1 / N := by
+      have : t_node (k+1) - t_node k = (1:ℝ) / N := by
+        rw [ht_node_def]; push_cast; field_simp
+      rw [this]
+      rw [abs_of_pos]
+      apply div_pos one_pos (by exact_mod_cast hN_pos)
+    calc ‖∫ t in t_node k..t_node (k+1), F (t_node k) z - F t z‖
+        ≤ (ε / 2) * |t_node (k+1) - t_node k| :=
+          intervalIntegral.norm_integral_le_of_norm_le_const hbound
+      _ = (ε / 2) * (1 / N) := by rw [hlen]
+  -- Triangle inequality.
+  have hsum_bound :
+      ‖∑ k ∈ Finset.range N,
+        ((∫ _ in t_node k..t_node (k+1), F (t_node k) z) -
+         (∫ t in t_node k..t_node (k+1), F t z))‖ ≤
+      ∑ k ∈ Finset.range N, (ε/2) * (1/N) := by
+    refine (norm_sum_le _ _).trans ?_
+    exact Finset.sum_le_sum h_diff_bound
+  have hsum_eq : ∑ _k ∈ Finset.range N, (ε/2) * (1/(N:ℝ)) = ε/2 := by
+    rw [Finset.sum_const]
+    simp [Finset.card_range]
+    field_simp
+  rw [hsum_eq] at hsum_bound
+  linarith
+
 private lemma segment_pole_sum_uniform_approx
     {K : Set ℂ} (hK : IsCompact K) {a b : ℂ}
     (h_seg_off_K : ∀ t ∈ Set.Icc (0:ℝ) 1, a + (t : ℂ) * (b - a) ∉ K)
@@ -792,7 +969,185 @@ private lemma segment_pole_sum_uniform_approx
         ‖(∑ j, coeff j / (z - sample j))
           - (1 / (2 * (Real.pi : ℂ) * Complex.I))
             * segmentIntegral a b (fun ζ => g ζ / (ζ - z))‖ < ε := by
-  sorry
+  intro ε hε
+  -- The integrand kernel F(t, z) = g(γ(t)) * (b-a) / (γ(t) - z), where γ(t) = a + t(b-a).
+  set γ : ℝ → ℂ := fun t => a + (t : ℂ) * (b - a) with hγ_def
+  -- F : ℝ → ℂ → ℂ
+  set F : ℝ → ℂ → ℂ := fun t z => g (γ t) * (b - a) / (γ t - z) with hF_def
+  -- Step 1: γ is continuous.
+  have hγ_cont : Continuous γ := by
+    refine Continuous.add continuous_const ?_
+    exact (Complex.continuous_ofReal.mul continuous_const)
+  -- Step 2: The segment image is compact.
+  have hΓ_compact : IsCompact (γ '' Set.Icc (0:ℝ) 1) :=
+    isCompact_Icc.image hγ_cont
+  -- Step 3: The segment image is disjoint from K.
+  have hΓK_disj : Disjoint (γ '' Set.Icc (0:ℝ) 1) K := by
+    rw [Set.disjoint_iff]
+    rintro x ⟨⟨t, ht, rfl⟩, hxK⟩
+    exact h_seg_off_K t ht hxK
+  -- Step 4: K is closed (compact in Hausdorff space).
+  have hK_closed : IsClosed K := hK.isClosed
+  -- Step 5: positive distance lower bound.
+  obtain ⟨r, hr_pos, hr_lt⟩ := Metric.exists_pos_forall_lt_edist hΓ_compact hK_closed hΓK_disj
+  -- Convert to a usable distance form: ∀ p ∈ Γ, ∀ q ∈ K, ‖p - q‖ ≥ r.
+  have hdist_lower : ∀ t ∈ Set.Icc (0:ℝ) 1, ∀ z ∈ K, (r : ℝ) ≤ ‖γ t - z‖ := by
+    intro t ht z hz
+    have := hr_lt (γ t) ⟨t, ht, rfl⟩ z hz
+    have h1 : (edist (γ t) z).toReal = dist (γ t) z := by
+      rw [edist_dist]
+      rw [ENNReal.toReal_ofReal dist_nonneg]
+    have hcoer : ((r : ℝ≥0∞)).toReal = (r : ℝ) := by simp
+    have hlt : (r : ℝ≥0∞) < edist (γ t) z := this
+    have hedist_lt_top : edist (γ t) z < ⊤ := edist_lt_top _ _
+    have := (ENNReal.toReal_lt_toReal (by exact_mod_cast (ne_top_iff_ne_top_of_lt hlt).mpr
+      hedist_lt_top.ne) hedist_lt_top.ne).mpr hlt
+    rw [hcoer, h1] at this
+    rw [dist_eq_norm] at this
+    linarith
+  -- Step 6: F is continuous on [0,1] × K.
+  have hF_cont : ContinuousOn (fun p : ℝ × ℂ => F p.1 p.2) (Set.Icc (0:ℝ) 1 ×ˢ K) := by
+    -- numerator g(γ(t)) * (b - a), continuous in (t, z), via g composed with continuous γ ∘ fst.
+    -- denominator γ(t) - z, continuous and nonzero.
+    intro p hp
+    obtain ⟨hp1, hp2⟩ := hp
+    -- continuity of γ ∘ fst at p
+    have hγp_cont : ContinuousAt (fun p : ℝ × ℂ => γ p.1) p :=
+      (hγ_cont.continuousAt.comp continuous_fst.continuousAt)
+    -- continuity of g at γ(p.1): g is continuous on the segment image.
+    have hg_at : ContinuousWithinAt (fun p : ℝ × ℂ => g (γ p.1))
+        (Set.Icc (0:ℝ) 1 ×ˢ K) p := by
+      have h1 : γ p.1 ∈ γ '' Set.Icc (0:ℝ) 1 := ⟨p.1, hp1, rfl⟩
+      have hg_at_γp := h_g_cont (γ p.1) h1
+      -- ContinuousWithinAt g at γ p.1, restricted to image.
+      -- Compose with continuous γ ∘ fst.
+      have hcomp_in : ∀ q ∈ Set.Icc (0:ℝ) 1 ×ˢ K, γ q.1 ∈ γ '' Set.Icc (0:ℝ) 1 := by
+        rintro q ⟨hq1, _⟩
+        exact ⟨q.1, hq1, rfl⟩
+      exact hg_at_γp.comp hγp_cont.continuousWithinAt hcomp_in
+    -- continuity of denominator γ(t) - z.
+    have hden_cont : ContinuousAt (fun p : ℝ × ℂ => γ p.1 - p.2) p := by
+      exact hγp_cont.sub continuous_snd.continuousAt
+    -- denominator nonzero
+    have hden_ne : γ p.1 - p.2 ≠ 0 := by
+      intro heq
+      have : ‖γ p.1 - p.2‖ = 0 := by rw [heq]; simp
+      have := hdist_lower p.1 hp1 p.2 hp2
+      have hr_pos_real : (0:ℝ) < r := by exact_mod_cast hr_pos
+      linarith
+    -- combine.
+    have h_num : ContinuousWithinAt (fun p : ℝ × ℂ => g (γ p.1) * (b - a))
+        (Set.Icc (0:ℝ) 1 ×ˢ K) p :=
+      hg_at.mul continuousWithinAt_const
+    have h_quot : ContinuousWithinAt (fun p : ℝ × ℂ => g (γ p.1) * (b - a) / (γ p.1 - p.2))
+        (Set.Icc (0:ℝ) 1 ×ˢ K) p :=
+      h_num.div hden_cont.continuousWithinAt hden_ne
+    exact h_quot
+  -- Step 7: Apply the generic Riemann sum approximation lemma.
+  -- Target ε' = ε * 2 * π (so that after multiplying by 1/(2π) we get ε).
+  have h2pi_pos : (0:ℝ) < 2 * Real.pi := by positivity
+  set ε' : ℝ := ε * (2 * Real.pi) with hε'_def
+  have hε' : 0 < ε' := by
+    rw [hε'_def]
+    positivity
+  obtain ⟨N, hN_pos, h_riemann⟩ :=
+    riemann_sum_uniform_approx_continuous_param hK F hF_cont ε' hε'
+  -- Step 8: define samples and coefficients.
+  -- sample j = γ(j/N), coeff j = -(1/(2πi)) * g(γ(j/N)) * (b-a) / N.
+  refine ⟨N, fun j => γ ((j : ℝ) / N),
+    fun j => -(1 / (2 * (Real.pi : ℂ) * Complex.I)) * g (γ ((j : ℝ) / N)) * (b - a) / N, ?_, ?_⟩
+  · -- samples are outside K.
+    intro j
+    have hj_in : ((j : ℝ) / N) ∈ Set.Icc (0:ℝ) 1 := by
+      refine ⟨?_, ?_⟩
+      · exact div_nonneg (by exact_mod_cast (Nat.zero_le j.val)) (by exact_mod_cast hN_pos.le)
+      · rw [div_le_one (by exact_mod_cast hN_pos)]
+        exact_mod_cast (Nat.lt_succ_iff.mp (Nat.lt_succ_of_lt j.isLt)).trans_lt (Nat.lt_succ_self N) |>.le
+    -- Actually simpler: j.val < N so j/N < 1 ≤ 1.
+    have hjle : ((j : ℝ) / N) ∈ Set.Icc (0:ℝ) 1 := hj_in
+    exact h_seg_off_K _ hjle
+  · -- the bound
+    intro z hz
+    -- Compute the pole sum.
+    have h_pole_eq :
+        (∑ j : Fin N, (-(1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+              g (γ ((j : ℝ) / N)) * (b - a) / N) / (z - γ ((j : ℝ) / N))) =
+        -(1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+          ∑ j : Fin N, g (γ ((j : ℝ) / N)) * (b - a) / (N * (z - γ ((j : ℝ) / N))) := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j _
+      field_simp
+      ring
+    -- Simplify -(.../N) / (z - x) = -(... / (N*(z-x))) = ... / (N*(x-z)) (sign flip).
+    -- We want to relate this to (1/(2πi)) * (1/N) * ∑ g(γ(j/N))(b-a)/(γ(j/N) - z).
+    -- Note: -1/(z - x) = 1/(x - z).
+    have h_pole_eq2 :
+        (∑ j : Fin N, (-(1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+              g (γ ((j : ℝ) / N)) * (b - a) / N) / (z - γ ((j : ℝ) / N))) =
+        (1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+          ∑ j : Fin N, F ((j : ℝ) / N) z / N := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j _
+      have hjle : ((j : ℝ) / N) ∈ Set.Icc (0:ℝ) 1 := by
+        refine ⟨?_, ?_⟩
+        · exact div_nonneg (by exact_mod_cast (Nat.zero_le j.val))
+            (by exact_mod_cast hN_pos.le)
+        · rw [div_le_one (by exact_mod_cast hN_pos)]
+          exact_mod_cast j.isLt.le
+      have hγ_ne : γ ((j : ℝ) / N) - z ≠ 0 := by
+        intro heq
+        have hzero : ‖γ ((j : ℝ) / N) - z‖ = 0 := by rw [heq]; simp
+        have hge := hdist_lower _ hjle z hz
+        have hrpos : (0:ℝ) < r := by exact_mod_cast hr_pos
+        linarith
+      have hzn : z - γ ((j : ℝ) / N) ≠ 0 := by
+        intro heq
+        apply hγ_ne
+        linear_combination -heq
+      have hN_ne : (N : ℂ) ≠ 0 := by exact_mod_cast hN_pos.ne'
+      have h2πi_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := by
+        apply mul_ne_zero
+        · apply mul_ne_zero
+          · exact two_ne_zero
+          · exact_mod_cast Real.pi_ne_zero
+        · exact Complex.I_ne_zero
+      rw [hF_def]
+      simp only
+      field_simp
+      ring
+    -- segmentIntegral = ∫₀¹ g(γ(t)) (b - a) / (γ(t) - z) dt = ∫₀¹ F(t, z) dt.
+    have h_segInt :
+        segmentIntegral a b (fun ζ => g ζ / (ζ - z)) =
+        ∫ t in (0:ℝ)..1, F t z := by
+      unfold segmentIntegral
+      apply intervalIntegral.integral_congr
+      intro t ht
+      rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+      simp [hF_def, hγ_def]
+      ring
+    rw [h_pole_eq2, h_segInt]
+    -- Now: |1/(2πi) * (Σ F(j/N, z)/N - ∫ F)| < ε.
+    rw [← mul_sub]
+    rw [norm_mul]
+    have hnorm_inv : ‖(1 / (2 * (Real.pi : ℂ) * Complex.I))‖ = 1 / (2 * Real.pi) := by
+      rw [norm_div, norm_one]
+      rw [norm_mul, norm_mul]
+      simp [Complex.norm_I, abs_of_pos (Real.pi_pos)]
+    rw [hnorm_inv]
+    have h_riem_z := h_riemann z hz
+    have h_2pi_pos : (0:ℝ) < 2 * Real.pi := by positivity
+    have h_2pi_ne : 2 * Real.pi ≠ 0 := ne_of_gt h_2pi_pos
+    have : (1 / (2 * Real.pi)) *
+        ‖(∑ j : Fin N, F ((j : ℝ) / N) z / N) - ∫ t in (0:ℝ)..1, F t z‖ <
+        (1 / (2 * Real.pi)) * ε' := by
+      apply mul_lt_mul_of_pos_left h_riem_z
+      positivity
+    have h_ε'_eq : (1 / (2 * Real.pi)) * ε' = ε := by
+      rw [hε'_def]
+      field_simp
+    linarith
 
 end CauchyIntegralApproximation
 
