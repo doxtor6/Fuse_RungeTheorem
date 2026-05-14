@@ -315,15 +315,16 @@ private lemma segmentIntegral_inv_of_slitPlane
   have hfa : f 0 = Complex.log (a - z) := by
     simp [hf_def]
   have hfb : f 1 = Complex.log (b - z) := by
-    simp [hf_def]
-    ring_nf
+    show Complex.log ((a - z) + ((1:ℝ) : ℂ) * (b - a)) = Complex.log (b - z)
+    congr 1; push_cast; ring
   have hcont : ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a))
-      (Set.uIcc (0:ℝ) 1) := by
-    intro t ht
-    exact (hderiv t ht).continuousAt.continuousWithinAt
+      (Set.uIcc (0:ℝ) 1) := fun t ht =>
+    (hderiv t ht).continuousAt.continuousWithinAt
   have hint : IntervalIntegrable
-      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 :=
-    (hcont.intervalIntegrable_of_Icc (by norm_num : (0:ℝ) ≤ 1))
+      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 := by
+    rw [intervalIntegrable_iff]
+    rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at hcont
+    exact hcont.integrableOn_Icc
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   rw [hFTC, hfb, hfa]
 
