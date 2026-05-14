@@ -159,7 +159,7 @@ private lemma rectangle_holomorphic_part_integral_zero
     rw [key]
     rw [intervalIntegral.integral_const_mul]
     congr 1
-    ring
+    rw [add_comm s y₀]
   have h_seg_CD : segmentIntegral C D g =
       -(∫ x : ℝ in x₀..x₀ + s, g (x + ((y₀ + s : ℝ) : ℂ) * Complex.I)) := by
     unfold segmentIntegral
