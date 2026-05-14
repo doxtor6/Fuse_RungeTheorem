@@ -82,11 +82,20 @@ private lemma grid_squares_cover_compact
         -- h3 : -M/s - 1 < B
         -- hceil : M/s ≤ A
         -- want: -A - 1 < B (strict)
-        have hkey : -A - 1 < B := by linarith
+        have hkey : -A - 1 < B := by
+          have hneg : -A ≤ -M / s := by linarith
+          have hneg' : -A - 1 ≤ -M / s - 1 := by linarith
+          linarith [hneg', h3]
         have hkey' : ((-⌈M / s⌉ - 1 : ℤ) : ℝ) < (⌊(-M : ℝ) / s⌋ : ℝ) := by
+          push_cast
           show -A - 1 < B
           exact hkey
-        sorry
+        have hkey'' : (-⌈M / s⌉ - 1 : ℤ) < ⌊(-M : ℝ) / s⌋ := by exact_mod_cast hkey'
+        have h6 : -N ≤ ⌊(-M : ℝ) / s⌋ := by
+          have : -((⌈M / s⌉ : ℤ) + 1) = -⌈M / s⌉ - 1 := by ring
+          rw [hN_def, this]
+          exact hkey''.le
+        exact h6.trans h1
       · have h1 : ⌊u / s⌋ ≤ ⌊M / s⌋ := Int.floor_le_floor hus_ub
         have h2 : ⌊M / s⌋ ≤ N := by
           rw [hN_def]
