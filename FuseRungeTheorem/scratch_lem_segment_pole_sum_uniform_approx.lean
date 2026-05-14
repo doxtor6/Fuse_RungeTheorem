@@ -861,8 +861,9 @@ private lemma riemann_sum_uniform_approx_continuous_param
       ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
     intro k _
     rw [intervalIntegral.integral_const, h_step_eq k]
-    rw [smul_eq_mul]
-    ring
+    rw [Complex.real_smul]
+    push_cast
+    field_simp
   have h_sum_const :
       ∑ j : Fin N, F ((j : ℝ) / N) z / N =
         ∑ k ∈ Finset.range N, ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
