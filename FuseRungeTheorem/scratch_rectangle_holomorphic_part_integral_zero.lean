@@ -189,7 +189,12 @@ private lemma rectangle_holomorphic_part_integral_zero
     rw [key]
     rw [intervalIntegral.integral_symm]
     push_cast
-    ring_nf
+    have hx_swap : x₀ + s = s + x₀ := by ring
+    rw [hx_swap]
+    congr 1
+    ext x
+    congr 1
+    ring
   have h_seg_DA : segmentIntegral D A g =
       -(Complex.I * ∫ y : ℝ in y₀..y₀ + s, g ((x₀ : ℂ) + y * Complex.I)) := by
     unfold segmentIntegral
