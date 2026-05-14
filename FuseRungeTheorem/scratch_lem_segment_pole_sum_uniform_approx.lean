@@ -873,7 +873,6 @@ private lemma riemann_sum_uniform_approx_continuous_param
     intro j _
     have hjN : (j : ℕ) < N := j.isLt
     rw [← h_const_int j hjN]
-    rfl
   rw [h_sum_const, h_integral_split, ← Finset.sum_sub_distrib]
   -- Bound each term using uniform continuity.
   have h_diff_bound : ∀ k ∈ Finset.range N,
