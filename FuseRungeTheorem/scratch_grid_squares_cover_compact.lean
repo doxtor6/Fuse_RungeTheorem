@@ -83,9 +83,10 @@ private lemma grid_squares_cover_compact
         -- hceil : M/s ≤ A
         -- want: -A - 1 < B (strict)
         have hkey : -A - 1 < B := by
-          have hneg : -A ≤ -M / s := by linarith
-          have hneg' : -A - 1 ≤ -M / s - 1 := by linarith
-          linarith [hneg', h3]
+          have hneg : -A ≤ -(M / s) := neg_le_neg hceil
+          have heq : -M / s = -(M / s) := by ring
+          rw [heq] at h3
+          linarith
         have hkey' : ((-⌈M / s⌉ - 1 : ℤ) : ℝ) < (⌊(-M : ℝ) / s⌋ : ℝ) := by
           push_cast
           show -A - 1 < B
