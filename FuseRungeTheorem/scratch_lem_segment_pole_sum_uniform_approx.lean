@@ -860,7 +860,7 @@ private lemma riemann_sum_uniform_approx_continuous_param
   have h_const_int : ∀ k < N, F (t_node k) z / N =
       ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
     intro k _
-    rw [intervalIntegral.integral_const, h_step_eq k, smul_eq_mul]
+    simp only [intervalIntegral.integral_const, h_step_eq k, smul_eq_mul]
     field_simp
   have h_sum_const :
       ∑ j : Fin N, F ((j : ℝ) / N) z / N =
@@ -894,19 +894,21 @@ private lemma riemann_sum_uniform_approx_continuous_param
         rw [div_le_one hNRpos]
         exact_mod_cast hk.le
       have hdtt : |t_node k - t| ≤ 1 / (N : ℝ) := by
+        have hstep := h_step_eq k
+        have hNRpos' : (0:ℝ) < (N : ℝ) := hNRpos
         rw [abs_le]
-        constructor
-        · have : t ≤ t_node (k+1) := htIcc.2
-          have hstep := h_step_eq k
+        refine ⟨?_, ?_⟩
+        · have hlt : t_node k < t := htIcc.1
+          have h1Npos : (0:ℝ) ≤ 1 / (N : ℝ) := by positivity
           linarith
-        · linarith [htIcc.1.le]
+        · have hle : t ≤ t_node (k+1) := htIcc.2
+          linarith
       have hdist : dist ((t_node k, z) : ℝ × ℂ) ((t, z) : ℝ × ℂ) < δ := by
         rw [Prod.dist_eq, dist_self]
-        simp only [max_eq_left, max_le_iff]
         have h1 : dist (t_node k) t ≤ 1 / (N : ℝ) := by
           rw [Real.dist_eq]; exact hdtt
-        have : dist (t_node k) t < δ := lt_of_le_of_lt h1 hN_lt
-        simp [this]
+        have h2 : dist (t_node k) t < δ := lt_of_le_of_lt h1 hN_lt
+        simp [h2]
       have hp1 : (t_node k, z) ∈ Set.Icc (0:ℝ) 1 ×ˢ Z := ⟨hk_in_Icc, hz⟩
       have hp2 : (t, z) ∈ Set.Icc (0:ℝ) 1 ×ˢ Z := ⟨htInIcc, hz⟩
       have hd := hδ (t_node k, z) hp1 (t, z) hp2 hdist
