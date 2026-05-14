@@ -190,6 +190,37 @@ private lemma rectangle_holomorphic_part_integral_zero
     rw [intervalIntegral.integral_symm]
     push_cast
     ring_nf
+  have h_seg_DA : segmentIntegral D A g =
+      -(Complex.I * ∫ y : ℝ in y₀..y₀ + s, g ((x₀ : ℂ) + y * Complex.I)) := by
+    unfold segmentIntegral
+    rw [hAD]
+    have hD_eq : D = (x₀ : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I := by
+      rw [hD_def]; exact Complex.mk_eq_add_mul_I x₀ (y₀ + s)
+    have hrewrite : ∀ t : ℝ,
+        g (D + (t : ℂ) * (-((s : ℂ) * Complex.I))) * (-((s : ℂ) * Complex.I)) =
+        (-s : ℝ) • (Complex.I * g ((x₀ : ℂ) + ((-s * t + (y₀ + s) : ℝ) : ℂ) * Complex.I)) := by
+      intro t
+      rw [Complex.real_smul]
+      have heq : g (D + (t : ℂ) * (-((s : ℂ) * Complex.I))) =
+             g ((x₀ : ℂ) + ((-s * t + (y₀ + s) : ℝ) : ℂ) * Complex.I) := by
+        congr 1
+        rw [hD_eq]
+        push_cast
+        ring
+      rw [heq]
+      push_cast
+      ring
+    simp_rw [hrewrite]
+    rw [intervalIntegral.integral_smul]
+    have key := intervalIntegral.smul_integral_comp_mul_add
+      (f := fun y : ℝ => Complex.I * g ((x₀ : ℂ) + (y : ℝ) * Complex.I))
+      (a := 0) (b := 1) (c := -s) (d := y₀ + s)
+    simp only [mul_zero, zero_add, mul_one] at key
+    rw [key]
+    rw [intervalIntegral.integral_symm]
+    rw [intervalIntegral.integral_const_mul]
+    push_cast
+    ring_nf
   -- Build the closed and open rectangles.
   set R : Set ℂ := Set.Icc x₀ (x₀ + s) ×ℂ Set.Icc y₀ (y₀ + s) with hR_def
   set Rint : Set ℂ := Set.Ioo x₀ (x₀ + s) ×ℂ Set.Ioo y₀ (y₀ + s) with hRint_def
@@ -226,8 +257,8 @@ private lemma rectangle_holomorphic_part_integral_zero
     have hx_ne : x ≠ z := hx.2
     have hx_in_U_diff : x ∈ U \ {z} := ⟨hRint_sub_U hx_in, hx_ne⟩
     apply (hg_diff x hx_in_U_diff).differentiableAt
-    apply (hRint_open.sdiff isClosed_singleton).mem_nhds
-    exact ⟨hx_in, hx_ne⟩
+    have hU_diff_open : IsOpen (U \ ({z} : Set ℂ)) := hU.sdiff isClosed_singleton
+    exact hU_diff_open.mem_nhds hx_in_U_diff
   -- Apply Mathlib's Cauchy-Goursat theorem for a rectangle.
   have hAre : A.re = x₀ := by rw [hA_def]
   have hAim : A.im = y₀ := by rw [hA_def]
