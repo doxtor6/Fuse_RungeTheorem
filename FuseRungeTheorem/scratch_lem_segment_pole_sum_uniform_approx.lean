@@ -809,7 +809,7 @@ private lemma riemann_sum_uniform_approx_continuous_param
   set t_node : ℕ → ℝ := fun k => (k : ℝ) / N with ht_node_def
   have ht_node_zero : t_node 0 = 0 := by simp [t_node]
   have ht_node_N : t_node N = 1 := by
-    simp [t_node]
+    show (N : ℝ) / N = 1
     field_simp
   -- For each j, F(·, z) is continuous on [0,1].
   have hF_cont_z : ContinuousOn (fun t : ℝ => F t z) (Set.Icc (0:ℝ) 1) := by
@@ -824,6 +824,7 @@ private lemma riemann_sum_uniform_approx_continuous_param
     show ((k + 1 : ℕ) : ℝ) / N - (k : ℝ) / N = 1 / N
     push_cast
     field_simp
+    ring
   have h_step_le : ∀ k : ℕ, t_node k ≤ t_node (k + 1) := by
     intro k
     have h := h_step_eq k
