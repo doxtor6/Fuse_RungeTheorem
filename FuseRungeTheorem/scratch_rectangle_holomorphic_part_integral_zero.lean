@@ -89,7 +89,179 @@ private lemma rectangle_holomorphic_part_integral_zero
     segmentIntegral ⟨x₀ + s, y₀⟩ ⟨x₀ + s, y₀ + s⟩ g +
     segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ g +
     segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ g = 0 := by
-  sorry
+  -- Setup: corner abbreviations.
+  set A : ℂ := ⟨x₀, y₀⟩ with hA_def
+  set B : ℂ := ⟨x₀ + s, y₀⟩ with hB_def
+  set C : ℂ := ⟨x₀ + s, y₀ + s⟩ with hC_def
+  set D : ℂ := ⟨x₀, y₀ + s⟩ with hD_def
+  -- Key complex differences (axis-aligned).
+  have hBA : B - A = (s : ℂ) := by
+    rw [hA_def, hB_def]; ext <;> simp
+  have hCB : C - B = (s : ℂ) * Complex.I := by
+    rw [hB_def, hC_def]; ext <;> simp
+  have hDC : D - C = -(s : ℂ) := by
+    rw [hC_def, hD_def]; ext <;> simp
+  have hAD : A - D = -((s : ℂ) * Complex.I) := by
+    rw [hA_def, hD_def]; ext <;> simp
+  have hs_ne : (s : ℂ) ≠ 0 := by exact_mod_cast hs.ne'
+  -- Each segmentIntegral expressed as a real-axis interval integral.
+  have h_seg_AB : segmentIntegral A B g = ∫ x : ℝ in x₀..x₀ + s, g (x + y₀ * Complex.I) := by
+    unfold segmentIntegral
+    rw [hBA]
+    have hA_eq : A = (x₀ : ℂ) + (y₀ : ℂ) * Complex.I := by
+      rw [hA_def]; exact Complex.mk_eq_add_mul_I x₀ y₀
+    have hrewrite : ∀ t : ℝ,
+        g (A + (t : ℂ) * (s : ℂ)) * (s : ℂ) =
+        g (((s * t + x₀ : ℝ) : ℂ) + y₀ * Complex.I) * (s : ℂ) := by
+      intro t
+      congr 2
+      rw [hA_eq]
+      push_cast
+      ring
+    simp_rw [hrewrite]
+    rw [intervalIntegral.integral_mul_const]
+    have key := intervalIntegral.integral_comp_mul_add
+      (f := fun x : ℝ => g ((x : ℂ) + (y₀ : ℂ) * Complex.I))
+      (a := 0) (b := 1) hs.ne' (d := x₀)
+    simp only [mul_zero, zero_add, mul_one] at key
+    rw [key]
+    rw [smul_eq_mul]
+    push_cast
+    field_simp
+  have h_seg_BC : segmentIntegral B C g =
+      Complex.I * ∫ y : ℝ in y₀..y₀ + s, g (((x₀ + s : ℝ) : ℂ) + y * Complex.I) := by
+    unfold segmentIntegral
+    rw [hCB]
+    have hB_eq : B = ((x₀ + s : ℝ) : ℂ) + (y₀ : ℂ) * Complex.I := by
+      rw [hB_def]; exact Complex.mk_eq_add_mul_I (x₀ + s) y₀
+    have hrewrite : ∀ t : ℝ,
+        g (B + (t : ℂ) * ((s : ℂ) * Complex.I)) * ((s : ℂ) * Complex.I) =
+        g (((x₀ + s : ℝ) : ℂ) + ((s * t + y₀ : ℝ) : ℂ) * Complex.I) * ((s : ℂ) * Complex.I) := by
+      intro t
+      congr 2
+      rw [hB_eq]
+      push_cast
+      ring
+    simp_rw [hrewrite]
+    rw [intervalIntegral.integral_mul_const]
+    have key := intervalIntegral.integral_comp_mul_add
+      (f := fun y : ℝ => g (((x₀ + s : ℝ) : ℂ) + (y : ℂ) * Complex.I))
+      (a := 0) (b := 1) hs.ne' (d := y₀)
+    simp only [mul_zero, zero_add, mul_one] at key
+    rw [key]
+    rw [smul_eq_mul]
+    push_cast
+    field_simp
+    ring
+  have h_seg_CD : segmentIntegral C D g =
+      -(∫ x : ℝ in x₀..x₀ + s, g (x + ((y₀ + s : ℝ) : ℂ) * Complex.I)) := by
+    unfold segmentIntegral
+    rw [hDC]
+    have hC_eq : C = ((x₀ + s : ℝ) : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I := by
+      rw [hC_def]; exact Complex.mk_eq_add_mul_I (x₀ + s) (y₀ + s)
+    have hrewrite : ∀ t : ℝ,
+        g (C + (t : ℂ) * (-(s : ℂ))) * (-(s : ℂ)) =
+        g (((-s * t + (x₀ + s) : ℝ) : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I) * (-(s : ℂ)) := by
+      intro t
+      congr 2
+      rw [hC_eq]
+      push_cast
+      ring
+    simp_rw [hrewrite]
+    rw [intervalIntegral.integral_mul_const]
+    have hns : (-s) ≠ 0 := neg_ne_zero.mpr hs.ne'
+    have key := intervalIntegral.integral_comp_mul_add
+      (f := fun x : ℝ => g ((x : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I))
+      (a := 0) (b := 1) hns (d := x₀ + s)
+    simp only [mul_zero, zero_add, mul_one] at key
+    rw [key]
+    rw [intervalIntegral.integral_symm]
+    push_cast
+    rw [smul_eq_mul]
+    field_simp
+    ring
+  have h_seg_DA : segmentIntegral D A g =
+      -(Complex.I * ∫ y : ℝ in y₀..y₀ + s, g ((x₀ : ℂ) + y * Complex.I)) := by
+    unfold segmentIntegral
+    rw [hAD]
+    have hD_eq : D = (x₀ : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I := by
+      rw [hD_def]; exact Complex.mk_eq_add_mul_I x₀ (y₀ + s)
+    have hrewrite : ∀ t : ℝ,
+        g (D + (t : ℂ) * (-((s : ℂ) * Complex.I))) * (-((s : ℂ) * Complex.I)) =
+        g ((x₀ : ℂ) + ((-s * t + (y₀ + s) : ℝ) : ℂ) * Complex.I) * (-((s : ℂ) * Complex.I)) := by
+      intro t
+      congr 2
+      rw [hD_eq]
+      push_cast
+      ring
+    simp_rw [hrewrite]
+    rw [intervalIntegral.integral_mul_const]
+    have hns : (-s) ≠ 0 := neg_ne_zero.mpr hs.ne'
+    have key := intervalIntegral.integral_comp_mul_add
+      (f := fun y : ℝ => g ((x₀ : ℂ) + (y : ℂ) * Complex.I))
+      (a := 0) (b := 1) hns (d := y₀ + s)
+    simp only [mul_zero, zero_add, mul_one] at key
+    rw [key]
+    rw [intervalIntegral.integral_symm]
+    push_cast
+    rw [smul_eq_mul]
+    field_simp
+    ring
+  -- Build the closed and open rectangles.
+  set R : Set ℂ := Set.Icc x₀ (x₀ + s) ×ℂ Set.Icc y₀ (y₀ + s) with hR_def
+  set Rint : Set ℂ := Set.Ioo x₀ (x₀ + s) ×ℂ Set.Ioo y₀ (y₀ + s) with hRint_def
+  have hR_sub_U : R ⊆ U := by
+    intro w hw
+    simp only [hR_def, Complex.reProdIm, Set.mem_inter_iff, Set.mem_preimage] at hw
+    exact hrect_sub_U w hw.1 hw.2
+  have hRint_sub_R : Rint ⊆ R := by
+    intro w hw
+    simp only [hRint_def, Complex.reProdIm, Set.mem_inter_iff, Set.mem_preimage] at hw
+    simp only [hR_def, Complex.reProdIm, Set.mem_inter_iff, Set.mem_preimage]
+    exact ⟨Set.Ioo_subset_Icc_self hw.1, Set.Ioo_subset_Icc_self hw.2⟩
+  have hRint_sub_U : Rint ⊆ U := hRint_sub_R.trans hR_sub_U
+  have hRint_open : IsOpen Rint := isOpen_Ioo.reProdIm isOpen_Ioo
+  -- Continuity on the uIcc rectangle.
+  have hx_le : x₀ ≤ x₀ + s := by linarith
+  have hy_le : y₀ ≤ y₀ + s := by linarith
+  have huIcc_x : Set.uIcc x₀ (x₀ + s) = Set.Icc x₀ (x₀ + s) := Set.uIcc_of_le hx_le
+  have huIcc_y : Set.uIcc y₀ (y₀ + s) = Set.Icc y₀ (y₀ + s) := Set.uIcc_of_le hy_le
+  have hmin_x : min x₀ (x₀ + s) = x₀ := min_eq_left hx_le
+  have hmax_x : max x₀ (x₀ + s) = x₀ + s := max_eq_right hx_le
+  have hmin_y : min y₀ (y₀ + s) = y₀ := min_eq_left hy_le
+  have hmax_y : max y₀ (y₀ + s) = y₀ + s := max_eq_right hy_le
+  have hg_cont_R : ContinuousOn g R := hg_cont.mono hR_sub_U
+  have hg_cont_R' :
+      ContinuousOn g (Set.uIcc x₀ (x₀ + s) ×ℂ Set.uIcc y₀ (y₀ + s)) := by
+    rw [huIcc_x, huIcc_y]; exact hg_cont_R
+  have hg_diff_Hd : ∀ x ∈ Set.Ioo (min x₀ (x₀ + s)) (max x₀ (x₀ + s)) ×ℂ
+                          Set.Ioo (min y₀ (y₀ + s)) (max y₀ (y₀ + s)) \ ({z} : Set ℂ),
+                    DifferentiableAt ℂ g x := by
+    intro x hx
+    rw [hmin_x, hmax_x, hmin_y, hmax_y] at hx
+    have hx_in : x ∈ Rint := hx.1
+    have hx_ne : x ≠ z := hx.2
+    have hx_in_U_diff : x ∈ U \ {z} := ⟨hRint_sub_U hx_in, hx_ne⟩
+    apply (hg_diff x hx_in_U_diff).differentiableAt
+    apply (hRint_open.sdiff isClosed_singleton).mem_nhds
+    exact ⟨hx_in, hx_ne⟩
+  -- Apply Mathlib's Cauchy-Goursat theorem for a rectangle.
+  have hAre : A.re = x₀ := by rw [hA_def]
+  have hAim : A.im = y₀ := by rw [hA_def]
+  have hCre : C.re = x₀ + s := by rw [hC_def]
+  have hCim : C.im = y₀ + s := by rw [hC_def]
+  have hgoursat := Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable
+    g A C ({z}) (Set.countable_singleton z)
+    (by
+      rw [hAre, hAim, hCre, hCim]
+      exact hg_cont_R')
+    (by
+      rw [hAre, hAim, hCre, hCim]
+      exact hg_diff_Hd)
+  rw [hAre, hAim, hCre, hCim] at hgoursat
+  rw [h_seg_AB, h_seg_BC, h_seg_CD, h_seg_DA]
+  rw [smul_eq_mul, smul_eq_mul] at hgoursat
+  linear_combination hgoursat
 
 /--
 The sum of the four oriented `segmentIntegral`s of `ζ ↦ 1/(ζ - z)` around the
