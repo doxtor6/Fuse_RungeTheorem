@@ -104,6 +104,8 @@ private lemma rectangle_holomorphic_part_integral_zero
   have hAD : A - D = -((s : ℂ) * Complex.I) := by
     rw [hA_def, hD_def]; apply Complex.ext <;> simp
   have hs_ne : (s : ℂ) ≠ 0 := by exact_mod_cast hs.ne'
+  -- A helper: rewrite ∫ t in 0..1, g(((c*t + d : ℝ):ℂ) + Y) * (c:ℂ) = ∫ x in d..d+c, g((x:ℂ) + Y)
+  -- We'll use intervalIntegral.smul_integral_comp_mul_add.
   -- Each segmentIntegral expressed as a real-axis interval integral.
   have h_seg_AB : segmentIntegral A B g = ∫ x : ℝ in x₀..x₀ + s, g (x + y₀ * Complex.I) := by
     unfold segmentIntegral
@@ -112,22 +114,23 @@ private lemma rectangle_holomorphic_part_integral_zero
       rw [hA_def]; exact Complex.mk_eq_add_mul_I x₀ y₀
     have hrewrite : ∀ t : ℝ,
         g (A + (t : ℂ) * (s : ℂ)) * (s : ℂ) =
-        g (((s * t + x₀ : ℝ) : ℂ) + y₀ * Complex.I) * (s : ℂ) := by
+        (s : ℝ) • g (((s * t + x₀ : ℝ) : ℂ) + y₀ * Complex.I) := by
       intro t
+      rw [Complex.real_smul]
+      rw [mul_comm ((s : ℝ) : ℂ) _]
       congr 2
       rw [hA_eq]
       push_cast
       ring
     simp_rw [hrewrite]
-    rw [intervalIntegral.integral_mul_const]
-    have key := intervalIntegral.integral_comp_mul_add
+    rw [intervalIntegral.integral_smul]
+    have key := intervalIntegral.smul_integral_comp_mul_add
       (f := fun x : ℝ => g ((x : ℂ) + (y₀ : ℂ) * Complex.I))
-      (a := 0) (b := 1) hs.ne' (d := x₀)
+      (a := 0) (b := 1) (c := s) (d := x₀)
     simp only [mul_zero, zero_add, mul_one] at key
     rw [key]
-    rw [smul_eq_mul]
-    push_cast
-    field_simp
+    congr 1
+    ring
   have h_seg_BC : segmentIntegral B C g =
       Complex.I * ∫ y : ℝ in y₀..y₀ + s, g (((x₀ + s : ℝ) : ℂ) + y * Complex.I) := by
     unfold segmentIntegral
@@ -136,22 +139,26 @@ private lemma rectangle_holomorphic_part_integral_zero
       rw [hB_def]; exact Complex.mk_eq_add_mul_I (x₀ + s) y₀
     have hrewrite : ∀ t : ℝ,
         g (B + (t : ℂ) * ((s : ℂ) * Complex.I)) * ((s : ℂ) * Complex.I) =
-        g (((x₀ + s : ℝ) : ℂ) + ((s * t + y₀ : ℝ) : ℂ) * Complex.I) * ((s : ℂ) * Complex.I) := by
+        (s : ℝ) • (Complex.I * g (((x₀ + s : ℝ) : ℂ) + ((s * t + y₀ : ℝ) : ℂ) * Complex.I)) := by
       intro t
-      congr 2
-      rw [hB_eq]
-      push_cast
+      rw [Complex.real_smul]
+      have : g (B + (t : ℂ) * ((s : ℂ) * Complex.I)) =
+             g (((x₀ + s : ℝ) : ℂ) + ((s * t + y₀ : ℝ) : ℂ) * Complex.I) := by
+        congr 1
+        rw [hB_eq]
+        push_cast
+        ring
+      rw [this]
       ring
     simp_rw [hrewrite]
-    rw [intervalIntegral.integral_mul_const]
-    have key := intervalIntegral.integral_comp_mul_add
-      (f := fun y : ℝ => g (((x₀ + s : ℝ) : ℂ) + (y : ℂ) * Complex.I))
-      (a := 0) (b := 1) hs.ne' (d := y₀)
+    rw [intervalIntegral.integral_smul]
+    have key := intervalIntegral.smul_integral_comp_mul_add
+      (f := fun y : ℝ => Complex.I * g (((x₀ + s : ℝ) : ℂ) + (y : ℂ) * Complex.I))
+      (a := 0) (b := 1) (c := s) (d := y₀)
     simp only [mul_zero, zero_add, mul_one] at key
     rw [key]
-    rw [smul_eq_mul]
-    push_cast
-    field_simp
+    rw [intervalIntegral.integral_const_mul]
+    congr 1
     ring
   have h_seg_CD : segmentIntegral C D g =
       -(∫ x : ℝ in x₀..x₀ + s, g (x + ((y₀ + s : ℝ) : ℂ) * Complex.I)) := by
@@ -161,52 +168,28 @@ private lemma rectangle_holomorphic_part_integral_zero
       rw [hC_def]; exact Complex.mk_eq_add_mul_I (x₀ + s) (y₀ + s)
     have hrewrite : ∀ t : ℝ,
         g (C + (t : ℂ) * (-(s : ℂ))) * (-(s : ℂ)) =
-        g (((-s * t + (x₀ + s) : ℝ) : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I) * (-(s : ℂ)) := by
+        (-s : ℝ) • g (((-s * t + (x₀ + s) : ℝ) : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I) := by
       intro t
-      congr 2
-      rw [hC_eq]
+      rw [Complex.real_smul]
+      have : g (C + (t : ℂ) * (-(s : ℂ))) =
+             g (((-s * t + (x₀ + s) : ℝ) : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I) := by
+        congr 1
+        rw [hC_eq]
+        push_cast
+        ring
+      rw [this]
       push_cast
       ring
     simp_rw [hrewrite]
-    rw [intervalIntegral.integral_mul_const]
-    have hns : (-s) ≠ 0 := neg_ne_zero.mpr hs.ne'
-    have key := intervalIntegral.integral_comp_mul_add
+    rw [intervalIntegral.integral_smul]
+    have key := intervalIntegral.smul_integral_comp_mul_add
       (f := fun x : ℝ => g ((x : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I))
-      (a := 0) (b := 1) hns (d := x₀ + s)
+      (a := 0) (b := 1) (c := -s) (d := x₀ + s)
     simp only [mul_zero, zero_add, mul_one] at key
     rw [key]
     rw [intervalIntegral.integral_symm]
     push_cast
-    rw [smul_eq_mul]
-    field_simp
-    ring
-  have h_seg_DA : segmentIntegral D A g =
-      -(Complex.I * ∫ y : ℝ in y₀..y₀ + s, g ((x₀ : ℂ) + y * Complex.I)) := by
-    unfold segmentIntegral
-    rw [hAD]
-    have hD_eq : D = (x₀ : ℂ) + ((y₀ + s : ℝ) : ℂ) * Complex.I := by
-      rw [hD_def]; exact Complex.mk_eq_add_mul_I x₀ (y₀ + s)
-    have hrewrite : ∀ t : ℝ,
-        g (D + (t : ℂ) * (-((s : ℂ) * Complex.I))) * (-((s : ℂ) * Complex.I)) =
-        g ((x₀ : ℂ) + ((-s * t + (y₀ + s) : ℝ) : ℂ) * Complex.I) * (-((s : ℂ) * Complex.I)) := by
-      intro t
-      congr 2
-      rw [hD_eq]
-      push_cast
-      ring
-    simp_rw [hrewrite]
-    rw [intervalIntegral.integral_mul_const]
-    have hns : (-s) ≠ 0 := neg_ne_zero.mpr hs.ne'
-    have key := intervalIntegral.integral_comp_mul_add
-      (f := fun y : ℝ => g ((x₀ : ℂ) + (y : ℂ) * Complex.I))
-      (a := 0) (b := 1) hns (d := y₀ + s)
-    simp only [mul_zero, zero_add, mul_one] at key
-    rw [key]
-    rw [intervalIntegral.integral_symm]
-    push_cast
-    rw [smul_eq_mul]
-    field_simp
-    ring
+    ring_nf
   -- Build the closed and open rectangles.
   set R : Set ℂ := Set.Icc x₀ (x₀ + s) ×ℂ Set.Icc y₀ (y₀ + s) with hR_def
   set Rint : Set ℂ := Set.Ioo x₀ (x₀ + s) ×ℂ Set.Ioo y₀ (y₀ + s) with hRint_def
