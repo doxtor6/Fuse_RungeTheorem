@@ -969,15 +969,15 @@ private lemma segment_pole_sum_uniform_approx
   -- Convert to a usable distance form: ∀ p ∈ Γ, ∀ q ∈ K, ‖p - q‖ ≥ r.
   have hdist_lower : ∀ t ∈ Set.Icc (0:ℝ) 1, ∀ z ∈ K, (r : ℝ) ≤ ‖γ t - z‖ := by
     intro t ht z hz
-    have hlt : (r : ℝ≥0∞) < edist (γ t) z := hr_lt (γ t) ⟨t, ht, rfl⟩ z hz
+    have hlt : ((r : ENNReal) : ENNReal) < edist (γ t) z := hr_lt (γ t) ⟨t, ht, rfl⟩ z hz
     have : (r : ℝ) ≤ dist (γ t) z := by
       have htop : edist (γ t) z ≠ ⊤ := (edist_lt_top _ _).ne
-      have hcoe : (r : ℝ≥0∞).toReal = (r : ℝ) := by
-        rw [ENNReal.coe_toReal]; rfl
       have hd : (edist (γ t) z).toReal = dist (γ t) z := by
         rw [edist_dist]; exact ENNReal.toReal_ofReal dist_nonneg
-      have hle : (r : ℝ≥0∞).toReal ≤ (edist (γ t) z).toReal :=
+      have hle : ((r : ENNReal)).toReal ≤ (edist (γ t) z).toReal :=
         ENNReal.toReal_mono htop hlt.le
+      have hcoe : ((r : ENNReal)).toReal = (r : ℝ) := by
+        simp
       rw [hcoe, hd] at hle
       exact hle
     rw [dist_eq_norm] at this
