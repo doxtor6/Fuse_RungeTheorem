@@ -995,13 +995,13 @@ private lemma segment_pole_sum_uniform_approx
     have hg_at : ContinuousWithinAt (fun p : ℝ × ℂ => g (γ p.1))
         (Set.Icc (0:ℝ) 1 ×ˢ K) p := by
       have h1 : γ p.1 ∈ γ '' Set.Icc (0:ℝ) 1 := ⟨p.1, hp1, rfl⟩
-      have hg_at_γp := h_g_cont (γ p.1) h1
-      -- ContinuousWithinAt g at γ p.1, restricted to image.
-      -- Compose with continuous γ ∘ fst.
-      have hcomp_in : ∀ q ∈ Set.Icc (0:ℝ) 1 ×ˢ K, γ q.1 ∈ γ '' Set.Icc (0:ℝ) 1 := by
+      have hg_at_γp : ContinuousWithinAt g (γ '' Set.Icc (0:ℝ) 1) (γ p.1) :=
+        h_g_cont (γ p.1) h1
+      have hmaps : Set.MapsTo (fun q : ℝ × ℂ => γ q.1)
+          (Set.Icc (0:ℝ) 1 ×ˢ K) (γ '' Set.Icc (0:ℝ) 1) := by
         rintro q ⟨hq1, _⟩
         exact ⟨q.1, hq1, rfl⟩
-      exact hg_at_γp.comp hγp_cont.continuousWithinAt hcomp_in
+      exact hg_at_γp.comp hγp_cont.continuousWithinAt hmaps
     -- continuity of denominator γ(t) - z.
     have hden_cont : ContinuousAt (fun p : ℝ × ℂ => γ p.1 - p.2) p := by
       exact hγp_cont.sub continuous_snd.continuousAt
