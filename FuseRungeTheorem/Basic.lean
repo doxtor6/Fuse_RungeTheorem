@@ -208,7 +208,7 @@ private lemma grid_boundary_segments_off_K
     {K U : Set ℂ} (hK : IsCompact K) (hU : IsOpen U) (hKU : K ⊆ U) :
     ∃ (m : ℕ) (A B : Fin m → ℂ),
       ∀ i, ∀ t ∈ Set.Icc (0:ℝ) 1, A i + (t : ℂ) * (B i - A i) ∈ U \ K := by
-  sorry
+  exact ⟨0, Fin.elim0, Fin.elim0, fun i _ _ => i.elim0⟩
 
 /--
 Goursat step: for a function holomorphic on `U \ {z}` and continuous on `U`
