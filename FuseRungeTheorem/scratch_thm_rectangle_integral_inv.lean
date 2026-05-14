@@ -294,10 +294,13 @@ private lemma segmentIntegral_inv_of_slitPlane
       rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
     have hslit : (a - z) + (t : ℂ) * (b - a) ∈ Complex.slitPlane := hseg t ht'
     have hbase : HasDerivAt (fun t : ℝ => (a - z) + (t : ℂ) * (b - a)) (b - a) t := by
-      have h1 : HasDerivAt (fun t : ℝ => ((t : ℝ) : ℂ)) (1 : ℂ) t :=
-        Complex.ofReal_hasDerivAt
+      have h1 : HasDerivAt (fun t : ℝ => (Complex.ofRealCLM t : ℂ))
+          (Complex.ofRealCLM 1 : ℂ) t :=
+        Complex.ofRealCLM.hasDerivAt
+      have h1' : HasDerivAt (fun t : ℝ => ((t : ℝ) : ℂ)) (1 : ℂ) t := by
+        simpa using h1
       have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) * (b - a)) (1 * (b - a)) t :=
-        h1.mul_const (b - a)
+        h1'.mul_const (b - a)
       have h3 : HasDerivAt (fun t : ℝ => (a - z) + (t : ℂ) * (b - a)) (0 + 1 * (b - a)) t :=
         (hasDerivAt_const t (a - z)).add h2
       simpa using h3
