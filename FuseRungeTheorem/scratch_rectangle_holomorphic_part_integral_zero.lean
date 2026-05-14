@@ -96,13 +96,13 @@ private lemma rectangle_holomorphic_part_integral_zero
   set D : ℂ := ⟨x₀, y₀ + s⟩ with hD_def
   -- Key complex differences (axis-aligned).
   have hBA : B - A = (s : ℂ) := by
-    rw [hA_def, hB_def]; ext <;> simp
+    rw [hA_def, hB_def]; apply Complex.ext <;> simp
   have hCB : C - B = (s : ℂ) * Complex.I := by
-    rw [hB_def, hC_def]; ext <;> simp
+    rw [hB_def, hC_def]; apply Complex.ext <;> simp
   have hDC : D - C = -(s : ℂ) := by
-    rw [hC_def, hD_def]; ext <;> simp
+    rw [hC_def, hD_def]; apply Complex.ext <;> simp
   have hAD : A - D = -((s : ℂ) * Complex.I) := by
-    rw [hA_def, hD_def]; ext <;> simp
+    rw [hA_def, hD_def]; apply Complex.ext <;> simp
   have hs_ne : (s : ℂ) ≠ 0 := by exact_mod_cast hs.ne'
   -- Each segmentIntegral expressed as a real-axis interval integral.
   have h_seg_AB : segmentIntegral A B g = ∫ x : ℝ in x₀..x₀ + s, g (x + y₀ * Complex.I) := by
