@@ -49,14 +49,14 @@ private lemma grid_squares_cover_compact
     have hjj_floor_le : (jj : ℝ) ≤ z.im / s := Int.floor_le _
     have hjj_lt_floor : z.im / s < (jj : ℝ) + 1 := Int.lt_floor_add_one _
     have hii_le_re : (ii : ℝ) * s ≤ z.re := by
-      have := (div_le_iff₀ hs_pos).mp hii_floor_le
+      have := (le_div_iff₀ hs_pos).mp hii_floor_le
       linarith
     have hre_le_ii : z.re ≤ (ii : ℝ) * s + s := by
       have h : z.re / s ≤ (ii : ℝ) + 1 := hii_lt_floor.le
       have := (div_le_iff₀ hs_pos).mp h
       linarith
     have hjj_le_im : (jj : ℝ) * s ≤ z.im := by
-      have := (div_le_iff₀ hs_pos).mp hjj_floor_le
+      have := (le_div_iff₀ hs_pos).mp hjj_floor_le
       linarith
     have him_le_jj : z.im ≤ (jj : ℝ) * s + s := by
       have h : z.im / s ≤ (jj : ℝ) + 1 := hjj_lt_floor.le
