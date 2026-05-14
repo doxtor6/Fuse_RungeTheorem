@@ -318,13 +318,25 @@ private lemma segmentIntegral_inv_of_slitPlane
     show Complex.log ((a - z) + ((1:ℝ) : ℂ) * (b - a)) = Complex.log (b - z)
     congr 1; push_cast; ring
   have hcont : ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a))
-      (Set.uIcc (0:ℝ) 1) := fun t ht =>
-    (hderiv t ht).continuousAt.continuousWithinAt
+      (Set.uIcc (0:ℝ) 1) := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit := hseg t ht'
+    have hne2 : (a - z) + (t : ℂ) * (b - a) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have hne : (a + (t : ℂ) * (b - a)) - z ≠ 0 := by
+      intro h; apply hne2; linear_combination h
+    have h_inner : ContinuousAt (fun t : ℝ => (a + (t : ℂ) * (b - a)) - z) t := by
+      exact ((continuous_const.add
+        (Complex.continuous_ofReal.mul continuous_const)).sub continuous_const).continuousAt
+    have h_inv : ContinuousAt (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) t := by
+      have h_inv0 : ContinuousAt (fun w : ℂ => (1 : ℂ) / w) ((a + (t : ℂ) * (b - a)) - z) := by
+        exact (continuousAt_const.div continuousAt_id hne)
+      exact h_inv0.comp h_inner
+    exact (h_inv.mul continuousAt_const).continuousWithinAt
   have hint : IntervalIntegrable
-      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 := by
-    rw [intervalIntegrable_iff]
-    rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at hcont
-    exact hcont.integrableOn_Icc
+      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 :=
+    intervalIntegrable_of_continuousOn (by simpa using hcont)
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   rw [hFTC, hfb, hfa]
 
