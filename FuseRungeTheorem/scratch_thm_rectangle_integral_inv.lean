@@ -416,7 +416,101 @@ private lemma rectangle_integral_inv_eq_two_pi_I
     segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ (fun ζ => 1 / (ζ - z)) +
     segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ (fun ζ => 1 / (ζ - z)) =
     2 * (Real.pi : ℂ) * Complex.I := by
-  sorry
+  -- Setup: corner abbreviations.
+  set A : ℂ := ⟨x₀, y₀⟩ with hA_def
+  set B : ℂ := ⟨x₀ + s, y₀⟩ with hB_def
+  set C : ℂ := ⟨x₀ + s, y₀ + s⟩ with hC_def
+  set D : ℂ := ⟨x₀, y₀ + s⟩ with hD_def
+  -- Decompose hypotheses.
+  obtain ⟨⟨hxlo, hxhi⟩, ⟨hylo, hyhi⟩⟩ := hz_int
+  -- Real/im parts of each corner.
+  have hAre : A.re = x₀ := rfl
+  have hAim : A.im = y₀ := rfl
+  have hBre : B.re = x₀ + s := rfl
+  have hBim : B.im = y₀ := rfl
+  have hCre : C.re = x₀ + s := rfl
+  have hCim : C.im = y₀ + s := rfl
+  have hDre : D.re = x₀ := rfl
+  have hDim : D.im = y₀ + s := rfl
+  -- Segment AB: shifted segment = (A-z) + t·(B-A) stays in slitPlane (Im < 0).
+  have hAB_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      (A - z) + (t : ℂ) * (B - A) ∈ Complex.slitPlane := by
+    intro t _
+    have him : ((A - z) + (t : ℂ) * (B - A)).im = y₀ - z.im := by
+      simp [hA_def, hB_def, Complex.add_im, Complex.mul_im, Complex.sub_im,
+            Complex.ofReal_re, Complex.ofReal_im]
+    right
+    rw [him]
+    linarith
+  -- Segment BC: Re = x₀ + s - z.re > 0.
+  have hBC_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      (B - z) + (t : ℂ) * (C - B) ∈ Complex.slitPlane := by
+    intro t _
+    have hre : ((B - z) + (t : ℂ) * (C - B)).re = (x₀ + s) - z.re := by
+      simp [hB_def, hC_def, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.sub_im,
+            Complex.ofReal_re, Complex.ofReal_im]
+    left
+    rw [hre]
+    linarith
+  -- Segment CD: Im = y₀ + s - z.im > 0.
+  have hCD_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      (C - z) + (t : ℂ) * (D - C) ∈ Complex.slitPlane := by
+    intro t _
+    have him : ((C - z) + (t : ℂ) * (D - C)).im = (y₀ + s) - z.im := by
+      simp [hC_def, hD_def, Complex.add_im, Complex.mul_im, Complex.sub_im,
+            Complex.ofReal_re, Complex.ofReal_im]
+    right
+    rw [him]
+    linarith
+  -- Segment DA: shifted by -1 stays in slitPlane (Re of -(D-z + t(A-D)) > 0).
+  have hDA_neg_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      -((D - z) + (t : ℂ) * (A - D)) ∈ Complex.slitPlane := by
+    intro t _
+    have hre : (-((D - z) + (t : ℂ) * (A - D))).re = z.re - x₀ := by
+      simp [hA_def, hD_def, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.sub_im,
+            Complex.neg_re, Complex.ofReal_re, Complex.ofReal_im]
+    left
+    rw [hre]
+    linarith
+  -- Apply the auxiliary lemmas.
+  rw [segmentIntegral_inv_of_slitPlane A B z hAB_slit]
+  rw [segmentIntegral_inv_of_slitPlane B C z hBC_slit]
+  rw [segmentIntegral_inv_of_slitPlane C D z hCD_slit]
+  rw [segmentIntegral_inv_of_neg_slitPlane D A z hDA_neg_slit]
+  -- Now we have:
+  --   (log(B-z) - log(A-z)) + (log(C-z) - log(B-z)) + (log(D-z) - log(C-z))
+  --     + (log(-(A-z)) - log(-(D-z))) = 2πi
+  -- Telescoping: = log(-(A-z)) - log(A-z) - log(-(D-z)) + log(D-z)
+  -- We compute each by arg analysis:
+  --   A - z has Im = y₀ - z.im < 0, so arg(-(A-z)) = arg(A-z) + π.
+  --   D - z has Im = y₀ + s - z.im > 0, so arg(-(D-z)) = arg(D-z) - π.
+  have hAz_im : (A - z).im = y₀ - z.im := by
+    simp [hA_def, Complex.sub_im, Complex.ofReal_im]
+  have hDz_im : (D - z).im = (y₀ + s) - z.im := by
+    simp [hD_def, Complex.sub_im, Complex.ofReal_im]
+  have hAz_im_neg : (A - z).im < 0 := by rw [hAz_im]; linarith
+  have hDz_im_pos : 0 < (D - z).im := by rw [hDz_im]; linarith
+  -- arg formulas.
+  have hargA : (-(A - z)).arg = (A - z).arg + Real.pi :=
+    Complex.arg_neg_eq_arg_add_pi_of_im_neg hAz_im_neg
+  have hargD : (-(D - z)).arg = (D - z).arg - Real.pi :=
+    Complex.arg_neg_eq_arg_sub_pi_of_im_pos hDz_im_pos
+  -- Norms.
+  have hnormA : ‖-(A - z)‖ = ‖A - z‖ := by rw [norm_neg]
+  have hnormD : ‖-(D - z)‖ = ‖D - z‖ := by rw [norm_neg]
+  -- Compute log(-(A-z)) - log(A-z) = π i.
+  have hlogA_diff : Complex.log (-(A - z)) - Complex.log (A - z) = Real.pi * Complex.I := by
+    rw [Complex.log, Complex.log]
+    rw [hnormA, hargA]
+    push_cast
+    ring
+  -- Compute log(D-z) - log(-(D-z)) = π i.
+  have hlogD_diff : Complex.log (D - z) - Complex.log (-(D - z)) = Real.pi * Complex.I := by
+    rw [Complex.log, Complex.log]
+    rw [hnormD, hargD]
+    push_cast
+    ring
+  linear_combination hlogA_diff + hlogD_diff
 
 /--
 Cauchy's integral formula on a single rectangle with one pole inside
