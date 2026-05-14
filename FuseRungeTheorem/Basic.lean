@@ -276,6 +276,130 @@ private lemma rectangle_holomorphic_part_integral_zero
   rw [smul_eq_mul, smul_eq_mul] at hgoursat
   linear_combination hgoursat
 
+/-- Auxiliary: segment integral of `1/(ζ - z)` along a segment from `a` to `b`,
+when the entire shifted segment `{(a-z) + t(b-a) : t ∈ [0,1]}` lies in
+`Complex.slitPlane`, equals `Complex.log(b-z) - Complex.log(a-z)`. -/
+private lemma segmentIntegral_inv_of_slitPlane
+    (a b z : ℂ)
+    (hseg : ∀ t ∈ Set.Icc (0:ℝ) 1, (a - z) + (t : ℂ) * (b - a) ∈ Complex.slitPlane) :
+    segmentIntegral a b (fun ζ => 1 / (ζ - z)) =
+      Complex.log (b - z) - Complex.log (a - z) := by
+  unfold segmentIntegral
+  set f : ℝ → ℂ := fun t => Complex.log ((a - z) + (t : ℂ) * (b - a)) with hf_def
+  have hderiv : ∀ t ∈ Set.uIcc (0:ℝ) 1,
+      HasDerivAt f (1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) t := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit : (a - z) + (t : ℂ) * (b - a) ∈ Complex.slitPlane := hseg t ht'
+    have hbase : HasDerivAt (fun t : ℝ => (a - z) + (t : ℂ) * (b - a)) (b - a) t := by
+      have h1 : HasDerivAt (fun t : ℝ => (Complex.ofRealCLM t : ℂ))
+          (Complex.ofRealCLM 1 : ℂ) t :=
+        Complex.ofRealCLM.hasDerivAt
+      have h1' : HasDerivAt (fun t : ℝ => ((t : ℝ) : ℂ)) (1 : ℂ) t := by
+        simpa using h1
+      have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) * (b - a)) (1 * (b - a)) t :=
+        h1'.mul_const (b - a)
+      have h3 : HasDerivAt (fun t : ℝ => (a - z) + (t : ℂ) * (b - a)) (0 + 1 * (b - a)) t :=
+        (hasDerivAt_const t (a - z)).add h2
+      simpa using h3
+    have hlog := hbase.clog_real hslit
+    convert hlog using 1
+    have hne : (a - z) + (t : ℂ) * (b - a) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have heq : (a + (t : ℂ) * (b - a)) - z = (a - z) + (t : ℂ) * (b - a) := by ring
+    rw [heq]
+    field_simp
+  have hfa : f 0 = Complex.log (a - z) := by
+    simp [hf_def]
+  have hfb : f 1 = Complex.log (b - z) := by
+    show Complex.log ((a - z) + ((1:ℝ) : ℂ) * (b - a)) = Complex.log (b - z)
+    congr 1; push_cast; ring
+  have hcont : ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a))
+      (Set.uIcc (0:ℝ) 1) := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit := hseg t ht'
+    have hne2 : (a - z) + (t : ℂ) * (b - a) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have hne : (a + (t : ℂ) * (b - a)) - z ≠ 0 := by
+      intro h; apply hne2; linear_combination h
+    have h_inner : ContinuousAt (fun t : ℝ => (a + (t : ℂ) * (b - a)) - z) t :=
+      ((continuous_const.add
+        (Complex.continuous_ofReal.mul continuous_const)).sub continuous_const).continuousAt
+    have h_inv : ContinuousAt (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) t :=
+      (continuousAt_const.div h_inner hne)
+    exact (h_inv.mul continuousAt_const).continuousWithinAt
+  have hint : IntervalIntegrable
+      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 :=
+    hcont.intervalIntegrable
+  have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
+  rw [hFTC, hfb, hfa]
+
+/-- Auxiliary "negated" variant: segment integral of `1/(ζ - z)` along a segment from
+`a` to `b`, when the entire negated shifted segment `{-((a-z) + t(b-a)) : t ∈ [0,1]}`
+lies in `Complex.slitPlane`, equals `Complex.log(-(b-z)) - Complex.log(-(a-z))`. -/
+private lemma segmentIntegral_inv_of_neg_slitPlane
+    (a b z : ℂ)
+    (hseg : ∀ t ∈ Set.Icc (0:ℝ) 1, -((a - z) + (t : ℂ) * (b - a)) ∈ Complex.slitPlane) :
+    segmentIntegral a b (fun ζ => 1 / (ζ - z)) =
+      Complex.log (-(b - z)) - Complex.log (-(a - z)) := by
+  unfold segmentIntegral
+  set f : ℝ → ℂ := fun t => Complex.log (-((a - z) + (t : ℂ) * (b - a))) with hf_def
+  have hderiv : ∀ t ∈ Set.uIcc (0:ℝ) 1,
+      HasDerivAt f (1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) t := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit : -((a - z) + (t : ℂ) * (b - a)) ∈ Complex.slitPlane := hseg t ht'
+    have hbase : HasDerivAt (fun t : ℝ => -((a - z) + (t : ℂ) * (b - a))) (-(b - a)) t := by
+      have h1 : HasDerivAt (fun t : ℝ => (Complex.ofRealCLM t : ℂ))
+          (Complex.ofRealCLM 1 : ℂ) t :=
+        Complex.ofRealCLM.hasDerivAt
+      have h1' : HasDerivAt (fun t : ℝ => ((t : ℝ) : ℂ)) (1 : ℂ) t := by
+        simpa using h1
+      have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) * (b - a)) (1 * (b - a)) t :=
+        h1'.mul_const (b - a)
+      have h3 : HasDerivAt (fun t : ℝ => (a - z) + (t : ℂ) * (b - a)) (0 + 1 * (b - a)) t :=
+        (hasDerivAt_const t (a - z)).add h2
+      have h4 : HasDerivAt (fun t : ℝ => -((a - z) + (t : ℂ) * (b - a))) (-(0 + 1 * (b - a))) t :=
+        h3.neg
+      simpa using h4
+    have hlog := hbase.clog_real hslit
+    convert hlog using 1
+    have hne : -((a - z) + (t : ℂ) * (b - a)) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have hne' : (a - z) + (t : ℂ) * (b - a) ≠ 0 := by
+      intro h; apply hne; rw [h]; ring
+    have heq : (a + (t : ℂ) * (b - a)) - z = (a - z) + (t : ℂ) * (b - a) := by ring
+    rw [heq]
+    field_simp
+  have hfa : f 0 = Complex.log (-(a - z)) := by
+    simp [hf_def]
+  have hfb : f 1 = Complex.log (-(b - z)) := by
+    show Complex.log (-((a - z) + ((1:ℝ) : ℂ) * (b - a))) = Complex.log (-(b - z))
+    congr 1; push_cast; ring
+  have hcont : ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a))
+      (Set.uIcc (0:ℝ) 1) := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit := hseg t ht'
+    have hne : -((a - z) + (t : ℂ) * (b - a)) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have hne' : (a - z) + (t : ℂ) * (b - a) ≠ 0 := by
+      intro h; apply hne; rw [h]; ring
+    have hne'' : (a + (t : ℂ) * (b - a)) - z ≠ 0 := by
+      intro h; apply hne'; linear_combination h
+    have h_inner : ContinuousAt (fun t : ℝ => (a + (t : ℂ) * (b - a)) - z) t :=
+      ((continuous_const.add
+        (Complex.continuous_ofReal.mul continuous_const)).sub continuous_const).continuousAt
+    have h_inv : ContinuousAt (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) t :=
+      (continuousAt_const.div h_inner hne'')
+    exact (h_inv.mul continuousAt_const).continuousWithinAt
+  have hint : IntervalIntegrable
+      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 :=
+    hcont.intervalIntegrable
+  have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
+  rw [hFTC, hfb, hfa]
+
 /--
 The sum of the four oriented `segmentIntegral`s of `ζ ↦ 1/(ζ - z)` around the
 rectangle boundary equals `2πi`, when `z` lies in the open interior of the
@@ -289,7 +413,84 @@ private lemma rectangle_integral_inv_eq_two_pi_I
     segmentIntegral ⟨x₀ + s, y₀ + s⟩ ⟨x₀, y₀ + s⟩ (fun ζ => 1 / (ζ - z)) +
     segmentIntegral ⟨x₀, y₀ + s⟩ ⟨x₀, y₀⟩ (fun ζ => 1 / (ζ - z)) =
     2 * (Real.pi : ℂ) * Complex.I := by
-  sorry
+  -- Setup: corner abbreviations.
+  set A : ℂ := ⟨x₀, y₀⟩ with hA_def
+  set B : ℂ := ⟨x₀ + s, y₀⟩ with hB_def
+  set C : ℂ := ⟨x₀ + s, y₀ + s⟩ with hC_def
+  set D : ℂ := ⟨x₀, y₀ + s⟩ with hD_def
+  -- Decompose hypotheses.
+  obtain ⟨⟨hxlo, hxhi⟩, ⟨hylo, hyhi⟩⟩ := hz_int
+  -- Segment AB: shifted segment = (A-z) + t·(B-A) stays in slitPlane (Im < 0).
+  have hAB_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      (A - z) + (t : ℂ) * (B - A) ∈ Complex.slitPlane := by
+    intro t _
+    have him : ((A - z) + (t : ℂ) * (B - A)).im = y₀ - z.im := by
+      simp [hA_def, hB_def, Complex.add_im, Complex.mul_im, Complex.sub_im,
+            Complex.ofReal_re]
+    right
+    rw [him]
+    linarith
+  -- Segment BC: Re = x₀ + s - z.re > 0.
+  have hBC_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      (B - z) + (t : ℂ) * (C - B) ∈ Complex.slitPlane := by
+    intro t _
+    have hre : ((B - z) + (t : ℂ) * (C - B)).re = (x₀ + s) - z.re := by
+      simp [hB_def, hC_def, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.sub_im,
+            Complex.ofReal_re, Complex.ofReal_im]
+    left
+    rw [hre]
+    linarith
+  -- Segment CD: Im = y₀ + s - z.im > 0.
+  have hCD_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      (C - z) + (t : ℂ) * (D - C) ∈ Complex.slitPlane := by
+    intro t _
+    have him : ((C - z) + (t : ℂ) * (D - C)).im = (y₀ + s) - z.im := by
+      simp [hC_def, hD_def, Complex.add_im, Complex.mul_im, Complex.sub_im,
+            Complex.ofReal_re]
+    right
+    rw [him]
+    linarith
+  -- Segment DA: shifted by -1 stays in slitPlane (Re of -(D-z + t(A-D)) > 0).
+  have hDA_neg_slit : ∀ t ∈ Set.Icc (0:ℝ) 1,
+      -((D - z) + (t : ℂ) * (A - D)) ∈ Complex.slitPlane := by
+    intro t _
+    have hre : (-((D - z) + (t : ℂ) * (A - D))).re = z.re - x₀ := by
+      simp [hA_def, hD_def, Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.sub_im,
+            Complex.neg_re, Complex.ofReal_re, Complex.ofReal_im]
+    left
+    rw [hre]
+    linarith
+  -- Apply the auxiliary lemmas.
+  rw [segmentIntegral_inv_of_slitPlane A B z hAB_slit]
+  rw [segmentIntegral_inv_of_slitPlane B C z hBC_slit]
+  rw [segmentIntegral_inv_of_slitPlane C D z hCD_slit]
+  rw [segmentIntegral_inv_of_neg_slitPlane D A z hDA_neg_slit]
+  -- Compute the differences via arg analysis:
+  --   A - z has Im < 0, so arg(-(A-z)) = arg(A-z) + π.
+  --   D - z has Im > 0, so arg(-(D-z)) = arg(D-z) - π.
+  have hAz_im : (A - z).im = y₀ - z.im := by
+    simp [hA_def, Complex.sub_im]
+  have hDz_im : (D - z).im = (y₀ + s) - z.im := by
+    simp [hD_def, Complex.sub_im]
+  have hAz_im_neg : (A - z).im < 0 := by rw [hAz_im]; linarith
+  have hDz_im_pos : 0 < (D - z).im := by rw [hDz_im]; linarith
+  have hargA : (-(A - z)).arg = (A - z).arg + Real.pi :=
+    Complex.arg_neg_eq_arg_add_pi_of_im_neg hAz_im_neg
+  have hargD : (-(D - z)).arg = (D - z).arg - Real.pi :=
+    Complex.arg_neg_eq_arg_sub_pi_of_im_pos hDz_im_pos
+  have hnormA : ‖-(A - z)‖ = ‖A - z‖ := by rw [norm_neg]
+  have hnormD : ‖-(D - z)‖ = ‖D - z‖ := by rw [norm_neg]
+  have hlogA_diff : Complex.log (-(A - z)) - Complex.log (A - z) = Real.pi * Complex.I := by
+    rw [Complex.log, Complex.log]
+    rw [hnormA, hargA]
+    push_cast
+    ring
+  have hlogD_diff : Complex.log (D - z) - Complex.log (-(D - z)) = Real.pi * Complex.I := by
+    rw [Complex.log, Complex.log]
+    rw [hnormD, hargD]
+    push_cast
+    ring
+  linear_combination hlogA_diff + hlogD_diff
 
 /--
 Cauchy's integral formula on a single rectangle with one pole inside
