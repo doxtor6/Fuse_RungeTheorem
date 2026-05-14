@@ -329,14 +329,12 @@ private lemma segmentIntegral_inv_of_slitPlane
     have h_inner : ContinuousAt (fun t : ℝ => (a + (t : ℂ) * (b - a)) - z) t := by
       exact ((continuous_const.add
         (Complex.continuous_ofReal.mul continuous_const)).sub continuous_const).continuousAt
-    have h_inv : ContinuousAt (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) t := by
-      have h_inv0 : ContinuousAt (fun w : ℂ => (1 : ℂ) / w) ((a + (t : ℂ) * (b - a)) - z) := by
-        exact (continuousAt_const.div continuousAt_id hne)
-      exact h_inv0.comp h_inner
+    have h_inv : ContinuousAt (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) t :=
+      (continuousAt_const.div h_inner hne)
     exact (h_inv.mul continuousAt_const).continuousWithinAt
   have hint : IntervalIntegrable
       (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 :=
-    intervalIntegrable_of_continuousOn (by simpa using hcont)
+    hcont.intervalIntegrable
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   rw [hFTC, hfb, hfa]
 
