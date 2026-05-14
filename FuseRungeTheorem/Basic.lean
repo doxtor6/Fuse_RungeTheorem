@@ -1233,7 +1233,14 @@ lemma path_to_infinity_in_connected_complement
     {a : ℂ} (ha : a ∉ K) :
     ∀ R : ℝ, ∃ (b : ℂ) (hb : b ∉ K) (γ : Path (⟨a, ha⟩ : (Kᶜ : Set ℂ)) ⟨b, hb⟩),
       R < ‖b‖ := by
-  sorry
+  intro R
+  obtain ⟨b, hb, hbR⟩ := compact_complement_unbounded hK R
+  have hKc_open : IsOpen (Kᶜ : Set ℂ) := hK.isClosed.isOpen_compl
+  have hKc_pathConn : IsPathConnected (Kᶜ : Set ℂ) :=
+    isConnected_isOpen_pathConnected_complex hKc_open hKc
+  have hjoinedIn : JoinedIn (Kᶜ : Set ℂ) a b :=
+    hKc_pathConn.joinedIn a ha b hb
+  exact ⟨b, hb, hjoinedIn.joined_subtype.somePath, hbR⟩
 
 /--
 Local pole-moving lemma.
