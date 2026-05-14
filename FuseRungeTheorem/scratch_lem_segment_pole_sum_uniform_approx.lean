@@ -969,18 +969,19 @@ private lemma segment_pole_sum_uniform_approx
   -- Convert to a usable distance form: ∀ p ∈ Γ, ∀ q ∈ K, ‖p - q‖ ≥ r.
   have hdist_lower : ∀ t ∈ Set.Icc (0:ℝ) 1, ∀ z ∈ K, (r : ℝ) ≤ ‖γ t - z‖ := by
     intro t ht z hz
-    have := hr_lt (γ t) ⟨t, ht, rfl⟩ z hz
-    have h1 : (edist (γ t) z).toReal = dist (γ t) z := by
-      rw [edist_dist]
-      rw [ENNReal.toReal_ofReal dist_nonneg]
-    have hcoer : ((r : ℝ≥0∞)).toReal = (r : ℝ) := by simp
-    have hlt : (r : ℝ≥0∞) < edist (γ t) z := this
-    have hedist_lt_top : edist (γ t) z < ⊤ := edist_lt_top _ _
-    have := (ENNReal.toReal_lt_toReal (by exact_mod_cast (ne_top_iff_ne_top_of_lt hlt).mpr
-      hedist_lt_top.ne) hedist_lt_top.ne).mpr hlt
-    rw [hcoer, h1] at this
+    have hlt : (r : ℝ≥0∞) < edist (γ t) z := hr_lt (γ t) ⟨t, ht, rfl⟩ z hz
+    have : (r : ℝ) ≤ dist (γ t) z := by
+      have htop : edist (γ t) z ≠ ⊤ := (edist_lt_top _ _).ne
+      have hcoe : (r : ℝ≥0∞).toReal = (r : ℝ) := by
+        rw [ENNReal.coe_toReal]; rfl
+      have hd : (edist (γ t) z).toReal = dist (γ t) z := by
+        rw [edist_dist]; exact ENNReal.toReal_ofReal dist_nonneg
+      have hle : (r : ℝ≥0∞).toReal ≤ (edist (γ t) z).toReal :=
+        ENNReal.toReal_mono htop hlt.le
+      rw [hcoe, hd] at hle
+      exact hle
     rw [dist_eq_norm] at this
-    linarith
+    exact this
   -- Step 6: F is continuous on [0,1] × K.
   have hF_cont : ContinuousOn (fun p : ℝ × ℂ => F p.1 p.2) (Set.Icc (0:ℝ) 1 ×ˢ K) := by
     -- numerator g(γ(t)) * (b - a), continuous in (t, z), via g composed with continuous γ ∘ fst.
