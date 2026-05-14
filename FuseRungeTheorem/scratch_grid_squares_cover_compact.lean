@@ -73,14 +73,15 @@ private lemma grid_squares_cover_compact
       have hu_ub : u ≤ M := le_of_abs_le hu
       have hus_lb : -M / s ≤ u / s := div_le_div_of_nonneg_right hu_lb hs_pos.le
       have hus_ub : u / s ≤ M / s := div_le_div_of_nonneg_right hu_ub hs_pos.le
-      refine ⟨?_, ?_⟩
       · have h1 : ⌊(-M : ℝ) / s⌋ ≤ ⌊u / s⌋ := Int.floor_le_floor hus_lb
         have h3 : (⌊(-M : ℝ) / s⌋ : ℝ) > -M / s - 1 := Int.sub_one_lt_floor (-M / s)
         have hceil : (M / s : ℝ) ≤ (⌈M / s⌉ : ℝ) := Int.le_ceil _
-        have h5 : ((-N : ℤ) : ℝ) ≤ (⌊(-M : ℝ) / s⌋ : ℝ) := by
-          rw [hN_def]; push_cast; linarith
-        have h6 : -N ≤ ⌊(-M : ℝ) / s⌋ := by exact_mod_cast h5
-        linarith
+        have hkey : (-(⌈M / s⌉ + 1 : ℤ) : ℝ) ≤ (⌊(-M : ℝ) / s⌋ : ℝ) := by
+          push_cast
+          linarith
+        have h4 : -(⌈M / s⌉ + 1 : ℤ) ≤ ⌊(-M : ℝ) / s⌋ := by exact_mod_cast hkey
+        have h6 : -N ≤ ⌊(-M : ℝ) / s⌋ := by rw [hN_def]; exact h4
+        exact h6.trans h1
       · have h1 : ⌊u / s⌋ ≤ ⌊M / s⌋ := Int.floor_le_floor hus_ub
         have h2 : ⌊M / s⌋ ≤ N := by
           rw [hN_def]
