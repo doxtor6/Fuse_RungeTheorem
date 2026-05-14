@@ -338,6 +338,71 @@ private lemma segmentIntegral_inv_of_slitPlane
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   rw [hFTC, hfb, hfa]
 
+/-- Auxiliary "negated" variant: segment integral of `1/(ζ - z)` along a segment from
+`a` to `b`, when the entire negated shifted segment `{-((a-z) + t(b-a)) : t ∈ [0,1]}`
+lies in `Complex.slitPlane`, equals `Complex.log(-(b-z)) - Complex.log(-(a-z))`. -/
+private lemma segmentIntegral_inv_of_neg_slitPlane
+    (a b z : ℂ)
+    (hseg : ∀ t ∈ Set.Icc (0:ℝ) 1, -((a - z) + (t : ℂ) * (b - a)) ∈ Complex.slitPlane) :
+    segmentIntegral a b (fun ζ => 1 / (ζ - z)) =
+      Complex.log (-(b - z)) - Complex.log (-(a - z)) := by
+  unfold segmentIntegral
+  set f : ℝ → ℂ := fun t => Complex.log (-((a - z) + (t : ℂ) * (b - a))) with hf_def
+  have hderiv : ∀ t ∈ Set.uIcc (0:ℝ) 1,
+      HasDerivAt f (1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) t := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit : -((a - z) + (t : ℂ) * (b - a)) ∈ Complex.slitPlane := hseg t ht'
+    have hbase : HasDerivAt (fun t : ℝ => -((a - z) + (t : ℂ) * (b - a))) (-(b - a)) t := by
+      have h1 : HasDerivAt (fun t : ℝ => (Complex.ofRealCLM t : ℂ))
+          (Complex.ofRealCLM 1 : ℂ) t :=
+        Complex.ofRealCLM.hasDerivAt
+      have h1' : HasDerivAt (fun t : ℝ => ((t : ℝ) : ℂ)) (1 : ℂ) t := by
+        simpa using h1
+      have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) * (b - a)) (1 * (b - a)) t :=
+        h1'.mul_const (b - a)
+      have h3 : HasDerivAt (fun t : ℝ => (a - z) + (t : ℂ) * (b - a)) (0 + 1 * (b - a)) t :=
+        (hasDerivAt_const t (a - z)).add h2
+      have h4 : HasDerivAt (fun t : ℝ => -((a - z) + (t : ℂ) * (b - a))) (-(0 + 1 * (b - a))) t :=
+        h3.neg
+      simpa using h4
+    have hlog := hbase.clog_real hslit
+    convert hlog using 1
+    have hne : -((a - z) + (t : ℂ) * (b - a)) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have hne' : (a - z) + (t : ℂ) * (b - a) ≠ 0 := by
+      intro h; apply hne; rw [h]; ring
+    have heq : (a + (t : ℂ) * (b - a)) - z = (a - z) + (t : ℂ) * (b - a) := by ring
+    rw [heq]
+    field_simp
+  have hfa : f 0 = Complex.log (-(a - z)) := by
+    simp [hf_def]
+  have hfb : f 1 = Complex.log (-(b - z)) := by
+    show Complex.log (-((a - z) + ((1:ℝ) : ℂ) * (b - a))) = Complex.log (-(b - z))
+    congr 1; push_cast; ring
+  have hcont : ContinuousOn (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a))
+      (Set.uIcc (0:ℝ) 1) := by
+    intro t ht
+    have ht' : t ∈ Set.Icc (0:ℝ) 1 := by
+      rwa [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+    have hslit := hseg t ht'
+    have hne : -((a - z) + (t : ℂ) * (b - a)) ≠ 0 := Complex.slitPlane_ne_zero hslit
+    have hne' : (a - z) + (t : ℂ) * (b - a) ≠ 0 := by
+      intro h; apply hne; rw [h]; ring
+    have hne'' : (a + (t : ℂ) * (b - a)) - z ≠ 0 := by
+      intro h; apply hne'; linear_combination h
+    have h_inner : ContinuousAt (fun t : ℝ => (a + (t : ℂ) * (b - a)) - z) t :=
+      ((continuous_const.add
+        (Complex.continuous_ofReal.mul continuous_const)).sub continuous_const).continuousAt
+    have h_inv : ContinuousAt (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z)) t :=
+      (continuousAt_const.div h_inner hne'')
+    exact (h_inv.mul continuousAt_const).continuousWithinAt
+  have hint : IntervalIntegrable
+      (fun t : ℝ => 1 / ((a + (t : ℂ) * (b - a)) - z) * (b - a)) MeasureTheory.volume 0 1 :=
+    hcont.intervalIntegrable
+  have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
+  rw [hFTC, hfb, hfa]
+
 /--
 The sum of the four oriented `segmentIntegral`s of `ζ ↦ 1/(ζ - z)` around the
 rectangle boundary equals `2πi`, when `z` lies in the open interior of the
