@@ -11,5 +11,6 @@
   "leanDeclaration": "path_to_infinity_in_connected_complement",
   "leanFile": "FuseRungeTheorem/Basic.lean",
   "assessment": "HARD",
-  "notes": "Signature: `lemma path_to_infinity_in_connected_complement {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ)) {a : ℂ} (ha : a ∉ K) : ∀ R : ℝ, ∃ (b : ℂ) (hb : b ∉ K) (γ : Path (⟨a, ha⟩ : (Kᶜ : Set ℂ)) ⟨b, hb⟩), R < ‖b‖`. Chose Mathlib `Path` on the subtype `↑Kᶜ` with endpoints `⟨a, ha⟩` and `⟨b, hb⟩`. This packages all three blueprint conditions: `γ(0)=a`, `γ(1)=b`, and `range γ ⊆ Kᶜ` (via the subtype). Alternative spelling with `JoinedIn (Kᶜ) a b` is also viable."
+  "notes": "Signature: `lemma path_to_infinity_in_connected_complement {K : Set ℂ} (hK : IsCompact K) (hKc : IsConnected (Kᶜ : Set ℂ)) {a : ℂ} (ha : a ∉ K) : ∀ R : ℝ, ∃ (b : ℂ) (hb : b ∉ K) (γ : Path (⟨a, ha⟩ : (Kᶜ : Set ℂ)) ⟨b, hb⟩), R < ‖b‖`. Chose Mathlib `Path` on the subtype `↑Kᶜ` with endpoints `⟨a, ha⟩` and `⟨b, hb⟩`. This packages all three blueprint conditions: `γ(0)=a`, `γ(1)=b`, and `range γ ⊆ Kᶜ` (via the subtype). Alternative spelling with `JoinedIn (Kᶜ) a b` is also viable.",
+  "scratchFile": "/data/clones/doxtor6/Fuse_RungeTheorem/fuse-rungetheorem/FuseRungeTheorem/scratch_thm_path_to_infinity.lean"
 }
