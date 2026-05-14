@@ -772,6 +772,160 @@ private lemma cauchy_grid_representation
           ∑ i, segmentIntegral (A i) (B i) (fun ζ => f ζ / (ζ - z)) :=
   grid_sum_cancels hK hU hKU hf
 
+/-- Generic uniform Riemann-sum approximation: for a continuous function
+`F : ℝ × ℂ → ℂ` and a compact `Z ⊆ ℂ`, the left-endpoint Riemann sum
+`(1/N) ∑_{j<N} F(j/N, z)` approximates `∫₀¹ F(t, z) dt` uniformly in `z ∈ Z`. -/
+private lemma riemann_sum_uniform_approx_continuous_param
+    {Z : Set ℂ} (hZ : IsCompact Z)
+    (F : ℝ → ℂ → ℂ)
+    (hF : ContinuousOn (fun p : ℝ × ℂ => F p.1 p.2) (Set.Icc (0:ℝ) 1 ×ˢ Z)) :
+    ∀ ε > 0, ∃ N : ℕ, 0 < N ∧ ∀ z ∈ Z,
+      ‖(∑ j : Fin N, F ((j : ℝ) / N) z / N) - ∫ t in (0:ℝ)..1, F t z‖ < ε := by
+  intro ε hε
+  have hprod : IsCompact (Set.Icc (0:ℝ) 1 ×ˢ Z) := isCompact_Icc.prod hZ
+  have hUC : UniformContinuousOn (fun p : ℝ × ℂ => F p.1 p.2)
+      (Set.Icc (0:ℝ) 1 ×ˢ Z) :=
+    hprod.uniformContinuousOn_of_continuous hF
+  have hε2 : (0:ℝ) < ε / 2 := by linarith
+  rw [Metric.uniformContinuousOn_iff] at hUC
+  obtain ⟨δ, hδpos, hδ⟩ := hUC (ε / 2) hε2
+  obtain ⟨N, hN_pos, hN_lt⟩ : ∃ N : ℕ, 0 < N ∧ (1 / (N : ℝ)) < δ := by
+    obtain ⟨M, hM⟩ := exists_nat_gt (1 / δ)
+    refine ⟨M + 1, Nat.succ_pos M, ?_⟩
+    have hM' : (1:ℝ) / δ < (M : ℝ) + 1 := by linarith
+    rw [div_lt_iff₀ (by exact_mod_cast Nat.succ_pos M : (0:ℝ) < ((M + 1 : ℕ) : ℝ))]
+    rw [div_lt_iff₀ hδpos] at hM'
+    have hcast : ((M + 1 : ℕ) : ℝ) = (M : ℝ) + 1 := by push_cast; ring
+    rw [hcast]
+    linarith
+  refine ⟨N, hN_pos, ?_⟩
+  intro z hz
+  have hNRpos : (0:ℝ) < (N : ℝ) := by exact_mod_cast hN_pos
+  have hNRne : (N : ℝ) ≠ 0 := ne_of_gt hNRpos
+  set t_node : ℕ → ℝ := fun k => (k : ℝ) / N with ht_node_def
+  have ht_node_zero : t_node 0 = 0 := by simp [t_node]
+  have ht_node_N : t_node N = 1 := by
+    show (N : ℝ) / N = 1
+    field_simp
+  have hF_cont_z : ContinuousOn (fun t : ℝ => F t z) (Set.Icc (0:ℝ) 1) := by
+    intro t ht
+    have hcont_prod : ContinuousOn (fun t : ℝ => ((t, z) : ℝ × ℂ)) (Set.Icc (0:ℝ) 1) :=
+      (continuous_id.prodMk continuous_const).continuousOn
+    have hmaps : Set.MapsTo (fun t : ℝ => ((t, z) : ℝ × ℂ)) (Set.Icc (0:ℝ) 1)
+        (Set.Icc (0:ℝ) 1 ×ˢ Z) := fun u hu => ⟨hu, hz⟩
+    exact (hF.comp hcont_prod hmaps) t ht
+  have h_step_eq : ∀ k : ℕ, t_node (k + 1) - t_node k = 1 / (N : ℝ) := by
+    intro k
+    show ((k + 1 : ℕ) : ℝ) / N - (k : ℝ) / N = 1 / N
+    push_cast
+    field_simp
+    ring
+  have h_step_le : ∀ k : ℕ, t_node k ≤ t_node (k + 1) := by
+    intro k
+    have h := h_step_eq k
+    have : (0:ℝ) < 1 / (N : ℝ) := by positivity
+    linarith
+  have h_step_in_Icc : ∀ k : ℕ, k < N →
+      ∀ t ∈ Set.Icc (t_node k) (t_node (k+1)), t ∈ Set.Icc (0:ℝ) 1 := by
+    intro k hk t ht
+    refine ⟨?_, ?_⟩
+    · have h1 : (0:ℝ) ≤ t_node k :=
+        div_nonneg (by exact_mod_cast Nat.zero_le k) hNRpos.le
+      linarith [ht.1]
+    · have h2 : t_node (k+1) ≤ 1 := by
+        show ((k + 1 : ℕ) : ℝ) / N ≤ 1
+        rw [div_le_one hNRpos]
+        exact_mod_cast hk
+      linarith [ht.2]
+  have h_subint : ∀ k < N, IntervalIntegrable (fun t : ℝ => F t z)
+      MeasureTheory.volume (t_node k) (t_node (k+1)) := by
+    intro k hk
+    apply ContinuousOn.intervalIntegrable
+    have hsub : Set.uIcc (t_node k) (t_node (k+1)) ⊆ Set.Icc (0:ℝ) 1 := by
+      rw [Set.uIcc_of_le (h_step_le k)]
+      intro t ht
+      exact h_step_in_Icc k hk t ht
+    exact hF_cont_z.mono hsub
+  have h_integral_split :
+      ∫ t in (0:ℝ)..1, F t z =
+        ∑ k ∈ Finset.range N, ∫ t in t_node k..t_node (k+1), F t z := by
+    conv_lhs => rw [← ht_node_zero, ← ht_node_N]
+    exact (intervalIntegral.sum_integral_adjacent_intervals h_subint).symm
+  have h_const_int : ∀ k < N, F (t_node k) z / N =
+      ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
+    intro k _
+    rw [intervalIntegral.integral_const, h_step_eq k]
+    rw [Complex.real_smul]
+    push_cast
+    field_simp
+  have h_sum_const :
+      ∑ j : Fin N, F ((j : ℝ) / N) z / N =
+        ∑ k ∈ Finset.range N, ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
+    rw [← Fin.sum_univ_eq_sum_range
+      (fun k => ∫ _ in t_node k..t_node (k+1), F (t_node k) z)]
+    apply Finset.sum_congr rfl
+    intro j _
+    have hjN : (j : ℕ) < N := j.isLt
+    rw [← h_const_int j hjN]
+  rw [h_sum_const, h_integral_split, ← Finset.sum_sub_distrib]
+  have h_diff_bound : ∀ k ∈ Finset.range N,
+      ‖(∫ _ in t_node k..t_node (k+1), F (t_node k) z) -
+       (∫ t in t_node k..t_node (k+1), F t z)‖ ≤ (ε/2) * (1/(N:ℝ)) := by
+    intro k hk
+    rw [Finset.mem_range] at hk
+    rw [← intervalIntegral.integral_sub
+      (intervalIntegrable_const) (h_subint k hk)]
+    have hbound : ∀ t ∈ Set.uIoc (t_node k) (t_node (k+1)),
+        ‖F (t_node k) z - F t z‖ ≤ ε / 2 := by
+      intro t ht
+      have htIcc : t ∈ Set.Ioc (t_node k) (t_node (k+1)) := by
+        rwa [Set.uIoc_of_le (h_step_le k)] at ht
+      have htInIcc : t ∈ Set.Icc (0:ℝ) 1 :=
+        h_step_in_Icc k hk t ⟨le_of_lt htIcc.1, htIcc.2⟩
+      have hk_in_Icc : t_node k ∈ Set.Icc (0:ℝ) 1 := by
+        refine ⟨div_nonneg (by exact_mod_cast Nat.zero_le k) hNRpos.le, ?_⟩
+        show (k : ℝ) / N ≤ 1
+        rw [div_le_one hNRpos]
+        exact_mod_cast hk.le
+      have hdtt : |t_node k - t| ≤ 1 / (N : ℝ) := by
+        have hstep := h_step_eq k
+        have hlt : t_node k < t := htIcc.1
+        have hle : t ≤ t_node (k+1) := htIcc.2
+        have h1Npos : (0:ℝ) ≤ 1 / (N : ℝ) := by positivity
+        rw [abs_le]
+        refine ⟨?_, ?_⟩
+        · linarith
+        · linarith
+      have hdist : dist ((t_node k, z) : ℝ × ℂ) ((t, z) : ℝ × ℂ) < δ := by
+        rw [Prod.dist_eq, dist_self]
+        have h1 : dist (t_node k) t ≤ 1 / (N : ℝ) := by
+          rw [Real.dist_eq]; exact hdtt
+        have h2 : dist (t_node k) t < δ := lt_of_le_of_lt h1 hN_lt
+        simp [h2]
+      have hp1 : (t_node k, z) ∈ Set.Icc (0:ℝ) 1 ×ˢ Z := ⟨hk_in_Icc, hz⟩
+      have hp2 : (t, z) ∈ Set.Icc (0:ℝ) 1 ×ˢ Z := ⟨htInIcc, hz⟩
+      have hd := hδ (t_node k, z) hp1 (t, z) hp2 hdist
+      rw [dist_eq_norm] at hd
+      linarith [hd.le]
+    have hlen : |t_node (k+1) - t_node k| = 1 / (N:ℝ) := by
+      rw [h_step_eq k]
+      exact abs_of_pos (by positivity)
+    calc ‖∫ t in t_node k..t_node (k+1), F (t_node k) z - F t z‖
+        ≤ (ε / 2) * |t_node (k+1) - t_node k| :=
+          intervalIntegral.norm_integral_le_of_norm_le_const hbound
+      _ = (ε / 2) * (1 / (N:ℝ)) := by rw [hlen]
+  have hsum_bound :
+      ‖∑ k ∈ Finset.range N,
+        ((∫ _ in t_node k..t_node (k+1), F (t_node k) z) -
+         (∫ t in t_node k..t_node (k+1), F t z))‖ ≤
+      ∑ _ ∈ Finset.range N, (ε/2) * (1/(N:ℝ)) :=
+    (norm_sum_le _ _).trans (Finset.sum_le_sum h_diff_bound)
+  have hsum_eq : ∑ _k ∈ Finset.range N, (ε/2) * (1/(N:ℝ)) = ε/2 := by
+    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    field_simp
+  rw [hsum_eq] at hsum_bound
+  linarith
+
 /--
 Uniform parametric Riemann-sum approximation of a segment integral (sub-lemma 2).
 
@@ -792,7 +946,139 @@ private lemma segment_pole_sum_uniform_approx
         ‖(∑ j, coeff j / (z - sample j))
           - (1 / (2 * (Real.pi : ℂ) * Complex.I))
             * segmentIntegral a b (fun ζ => g ζ / (ζ - z))‖ < ε := by
-  sorry
+  intro ε hε
+  set γ : ℝ → ℂ := fun t => a + (t : ℂ) * (b - a) with hγ_def
+  set F : ℝ → ℂ → ℂ := fun t z => g (γ t) * (b - a) / (γ t - z) with hF_def
+  have hγ_cont : Continuous γ := by
+    refine Continuous.add continuous_const ?_
+    exact (Complex.continuous_ofReal.mul continuous_const)
+  have hΓ_compact : IsCompact (γ '' Set.Icc (0:ℝ) 1) :=
+    isCompact_Icc.image hγ_cont
+  have hΓK_disj : Disjoint (γ '' Set.Icc (0:ℝ) 1) K := by
+    rw [Set.disjoint_iff]
+    rintro x ⟨⟨t, ht, rfl⟩, hxK⟩
+    exact h_seg_off_K t ht hxK
+  have hK_closed : IsClosed K := hK.isClosed
+  obtain ⟨r, hr_pos, hr_lt⟩ := Metric.exists_pos_forall_lt_edist hΓ_compact hK_closed hΓK_disj
+  have hdist_lower : ∀ t ∈ Set.Icc (0:ℝ) 1, ∀ z ∈ K, (r : ℝ) ≤ ‖γ t - z‖ := by
+    intro t ht z hz
+    have hlt : ((r : ENNReal) : ENNReal) < edist (γ t) z := hr_lt (γ t) ⟨t, ht, rfl⟩ z hz
+    have : (r : ℝ) ≤ dist (γ t) z := by
+      have htop : edist (γ t) z ≠ ⊤ := (edist_lt_top _ _).ne
+      have hd : (edist (γ t) z).toReal = dist (γ t) z := by
+        rw [edist_dist]; exact ENNReal.toReal_ofReal dist_nonneg
+      have hle : ((r : ENNReal)).toReal ≤ (edist (γ t) z).toReal :=
+        ENNReal.toReal_mono htop hlt.le
+      have hcoe : ((r : ENNReal)).toReal = (r : ℝ) := by simp
+      rw [hcoe, hd] at hle
+      exact hle
+    rw [dist_eq_norm] at this
+    exact this
+  have hF_cont : ContinuousOn (fun p : ℝ × ℂ => F p.1 p.2) (Set.Icc (0:ℝ) 1 ×ˢ K) := by
+    intro p hp
+    obtain ⟨hp1, hp2⟩ := hp
+    have hγp_cont : ContinuousAt (fun p : ℝ × ℂ => γ p.1) p :=
+      (hγ_cont.continuousAt.comp continuous_fst.continuousAt)
+    have hg_at : ContinuousWithinAt (fun p : ℝ × ℂ => g (γ p.1))
+        (Set.Icc (0:ℝ) 1 ×ˢ K) p := by
+      have h1 : γ p.1 ∈ γ '' Set.Icc (0:ℝ) 1 := ⟨p.1, hp1, rfl⟩
+      have hg_at_γp : ContinuousWithinAt g (γ '' Set.Icc (0:ℝ) 1) (γ p.1) :=
+        h_g_cont (γ p.1) h1
+      have hfst_cwa : ContinuousWithinAt (fun q : ℝ × ℂ => γ q.1)
+          (Set.Icc (0:ℝ) 1 ×ˢ K) p :=
+        hγp_cont.continuousWithinAt
+      have hmaps : Set.MapsTo (fun q : ℝ × ℂ => γ q.1)
+          (Set.Icc (0:ℝ) 1 ×ˢ K) (γ '' Set.Icc (0:ℝ) 1) := by
+        rintro q ⟨hq1, _⟩
+        exact ⟨q.1, hq1, rfl⟩
+      exact ContinuousWithinAt.comp (g := g) (f := fun q : ℝ × ℂ => γ q.1)
+        hg_at_γp hfst_cwa hmaps
+    have hden_cont : ContinuousAt (fun p : ℝ × ℂ => γ p.1 - p.2) p :=
+      hγp_cont.sub continuous_snd.continuousAt
+    have hden_ne : γ p.1 - p.2 ≠ 0 := by
+      intro heq
+      have hz0 : ‖γ p.1 - p.2‖ = 0 := by rw [heq]; simp
+      have hge := hdist_lower p.1 hp1 p.2 hp2
+      have hr_pos_real : (0:ℝ) < r := by exact_mod_cast hr_pos
+      linarith
+    have h_num : ContinuousWithinAt (fun p : ℝ × ℂ => g (γ p.1) * (b - a))
+        (Set.Icc (0:ℝ) 1 ×ˢ K) p :=
+      hg_at.mul continuousWithinAt_const
+    exact h_num.div hden_cont.continuousWithinAt hden_ne
+  have h2pi_pos : (0:ℝ) < 2 * Real.pi := by positivity
+  set ε' : ℝ := ε * (2 * Real.pi) with hε'_def
+  have hε' : 0 < ε' := by rw [hε'_def]; positivity
+  obtain ⟨N, hN_pos, h_riemann⟩ :=
+    riemann_sum_uniform_approx_continuous_param hK F hF_cont ε' hε'
+  refine ⟨N, fun j => γ ((j : ℝ) / N),
+    fun j => -(1 / (2 * (Real.pi : ℂ) * Complex.I)) * g (γ ((j : ℝ) / N)) * (b - a) / N, ?_, ?_⟩
+  · intro j
+    have hj_in : ((j : ℝ) / N) ∈ Set.Icc (0:ℝ) 1 := by
+      refine ⟨?_, ?_⟩
+      · exact div_nonneg (by exact_mod_cast (Nat.zero_le j.val)) (by exact_mod_cast hN_pos.le)
+      · rw [div_le_one (by exact_mod_cast hN_pos)]
+        exact_mod_cast j.isLt.le
+    exact h_seg_off_K _ hj_in
+  · intro z hz
+    have h_pole_eq2 :
+        (∑ j : Fin N, (-(1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+              g (γ ((j : ℝ) / N)) * (b - a) / N) / (z - γ ((j : ℝ) / N))) =
+        (1 / (2 * (Real.pi : ℂ) * Complex.I)) *
+          ∑ j : Fin N, F ((j : ℝ) / N) z / N := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro j _
+      have hjle : ((j : ℝ) / N) ∈ Set.Icc (0:ℝ) 1 := by
+        refine ⟨?_, ?_⟩
+        · exact div_nonneg (by exact_mod_cast (Nat.zero_le j.val))
+            (by exact_mod_cast hN_pos.le)
+        · rw [div_le_one (by exact_mod_cast hN_pos)]
+          exact_mod_cast j.isLt.le
+      have hγ_ne : γ ((j : ℝ) / N) - z ≠ 0 := by
+        intro heq
+        have hzero : ‖γ ((j : ℝ) / N) - z‖ = 0 := by rw [heq]; simp
+        have hge := hdist_lower _ hjle z hz
+        have hrpos : (0:ℝ) < r := by exact_mod_cast hr_pos
+        linarith
+      have hzn : z - γ ((j : ℝ) / N) ≠ 0 := by
+        intro heq
+        apply hγ_ne
+        linear_combination -heq
+      have hN_ne : (N : ℂ) ≠ 0 := by exact_mod_cast hN_pos.ne'
+      have h2πi_ne : (2 * (Real.pi : ℂ) * Complex.I) ≠ 0 := by
+        apply mul_ne_zero
+        · apply mul_ne_zero
+          · exact two_ne_zero
+          · exact_mod_cast Real.pi_ne_zero
+        · exact Complex.I_ne_zero
+      rw [hF_def]
+      simp only
+      field_simp
+      ring
+    have h_segInt :
+        segmentIntegral a b (fun ζ => g ζ / (ζ - z)) =
+        ∫ t in (0:ℝ)..1, F t z := by
+      unfold segmentIntegral
+      apply intervalIntegral.integral_congr
+      intro t ht
+      rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht
+      simp [hF_def, hγ_def]
+      ring
+    rw [h_pole_eq2, h_segInt]
+    rw [← mul_sub, norm_mul]
+    have hnorm_inv : ‖(1 / (2 * (Real.pi : ℂ) * Complex.I))‖ = 1 / (2 * Real.pi) := by
+      rw [norm_div, norm_one, norm_mul, norm_mul]
+      simp [Complex.norm_I, abs_of_pos (Real.pi_pos)]
+    rw [hnorm_inv]
+    have h_riem_z := h_riemann z hz
+    have h_mult_lt : (1 / (2 * Real.pi)) *
+        ‖(∑ j : Fin N, F ((j : ℝ) / N) z / N) - ∫ t in (0:ℝ)..1, F t z‖ <
+        (1 / (2 * Real.pi)) * ε' := by
+      apply mul_lt_mul_of_pos_left h_riem_z
+      positivity
+    have h_ε'_eq : (1 / (2 * Real.pi)) * ε' = ε := by
+      rw [hε'_def]; field_simp
+    linarith
 
 end CauchyIntegralApproximation
 
