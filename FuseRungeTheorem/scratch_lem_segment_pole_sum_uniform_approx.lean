@@ -860,8 +860,9 @@ private lemma riemann_sum_uniform_approx_continuous_param
   have h_const_int : ∀ k < N, F (t_node k) z / N =
       ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
     intro k _
-    simp only [intervalIntegral.integral_const, h_step_eq k, smul_eq_mul]
-    field_simp
+    rw [intervalIntegral.integral_const, h_step_eq k]
+    rw [smul_eq_mul]
+    ring
   have h_sum_const :
       ∑ j : Fin N, F ((j : ℝ) / N) z / N =
         ∑ k ∈ Finset.range N, ∫ _ in t_node k..t_node (k+1), F (t_node k) z := by
@@ -895,14 +896,13 @@ private lemma riemann_sum_uniform_approx_continuous_param
         exact_mod_cast hk.le
       have hdtt : |t_node k - t| ≤ 1 / (N : ℝ) := by
         have hstep := h_step_eq k
-        have hNRpos' : (0:ℝ) < (N : ℝ) := hNRpos
+        have hlt : t_node k < t := htIcc.1
+        have hle : t ≤ t_node (k+1) := htIcc.2
+        have h1Npos : (0:ℝ) ≤ 1 / (N : ℝ) := by positivity
         rw [abs_le]
         refine ⟨?_, ?_⟩
-        · have hlt : t_node k < t := htIcc.1
-          have h1Npos : (0:ℝ) ≤ 1 / (N : ℝ) := by positivity
-          linarith
-        · have hle : t ≤ t_node (k+1) := htIcc.2
-          linarith
+        · linarith
+        · linarith
       have hdist : dist ((t_node k, z) : ℝ × ℂ) ((t, z) : ℝ × ℂ) < δ := by
         rw [Prod.dist_eq, dist_self]
         have h1 : dist (t_node k) t ≤ 1 / (N : ℝ) := by
