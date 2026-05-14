@@ -1039,23 +1039,11 @@ private lemma segment_pole_sum_uniform_approx
       refine ⟨?_, ?_⟩
       · exact div_nonneg (by exact_mod_cast (Nat.zero_le j.val)) (by exact_mod_cast hN_pos.le)
       · rw [div_le_one (by exact_mod_cast hN_pos)]
-        exact_mod_cast (Nat.lt_succ_iff.mp (Nat.lt_succ_of_lt j.isLt)).trans_lt (Nat.lt_succ_self N) |>.le
-    -- Actually simpler: j.val < N so j/N < 1 ≤ 1.
-    have hjle : ((j : ℝ) / N) ∈ Set.Icc (0:ℝ) 1 := hj_in
-    exact h_seg_off_K _ hjle
+        exact_mod_cast j.isLt.le
+    exact h_seg_off_K _ hj_in
   · -- the bound
     intro z hz
     -- Compute the pole sum.
-    have h_pole_eq :
-        (∑ j : Fin N, (-(1 / (2 * (Real.pi : ℂ) * Complex.I)) *
-              g (γ ((j : ℝ) / N)) * (b - a) / N) / (z - γ ((j : ℝ) / N))) =
-        -(1 / (2 * (Real.pi : ℂ) * Complex.I)) *
-          ∑ j : Fin N, g (γ ((j : ℝ) / N)) * (b - a) / (N * (z - γ ((j : ℝ) / N))) := by
-      rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro j _
-      field_simp
-      ring
     -- Simplify -(.../N) / (z - x) = -(... / (N*(z-x))) = ... / (N*(x-z)) (sign flip).
     -- We want to relate this to (1/(2πi)) * (1/N) * ∑ g(γ(j/N))(b-a)/(γ(j/N) - z).
     -- Note: -1/(z - x) = 1/(x - z).
